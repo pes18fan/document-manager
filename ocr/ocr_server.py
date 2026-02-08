@@ -1,8 +1,11 @@
+from fastapi import FastAPI, UploadFile
+from PIL import Image
 import cv2
 import numpy as np
 import pytesseract
 
 
+# NOTE: may or may not be used
 def deskew(img, angle):
     # find the skew angle
     h, w = img.shape[:2]
@@ -47,26 +50,29 @@ def deskew(img, angle):
     return final
 
 
-path = "printed-ocr-test.jpg"
-img = cv2.imread(path)
+app = FastAPI()
 
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-gray = cv2.fastNlMeansDenoising(gray)
-th = cv2.adaptiveThreshold(
-    gray, 255,
-    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-    cv2.THRESH_BINARY,
-    31, 10
-)
 
-# # NOTE: needed for the deskewing, might work around this later
-# img = cv2.bitwise_not(img)
-#
-# rot = deskew(img, 0)
-cv2.imwrite("printed-ocr-test-fixed.jpg", th)
+@app.post("/ocr")
+async def ocr(file: UploadFile):
+    img_bytes = await file.read()
 
-out = pytesseract.image_to_string(
-    "printed-ocr-test.jpg", lang="nep")
+    # NOTE: the opencv logic may not be needed, thing is working well enough
+    # with tesseract's built-in preprocessing
+    cv_img = cv2.imdecode(
+        np.frombuffer(img_bytes, np.uint8),
+        cv2.IMREAD_COLOR
+    )
+    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.fastNlMeansDenoising(gray)
+    th = cv2.adaptiveThreshold(
+        gray, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        31, 10
+    )
+    conv = cv2.cvtColor(th, cv2.COLOR_BGR2RGB)
+    out_image = Image.fromarray(conv)
 
-with open("out.txt", "w") as f:
-    f.write(out)
+    text = pytesseract.image_to_string(out_image, lang="nep+eng")
+    return {"text": text}
