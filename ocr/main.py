@@ -65,5 +65,8 @@ th = cv2.adaptiveThreshold(
 # rot = deskew(img, 0)
 cv2.imwrite("printed-ocr-test-fixed.jpg", th)
 
-print(pytesseract.image_to_string(
-    "printed-ocr-test.jpg", lang="nep"))
+out = pytesseract.image_to_string(
+    "printed-ocr-test.jpg", lang="nep")
+
+with open("out.txt", "w") as f:
+    f.write(out)
