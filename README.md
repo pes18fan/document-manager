@@ -23,7 +23,7 @@ uvicorn ocr_server:app --host 127.0.0.1 --port 8000
 This will open up a HTTP server where you can make requests to the `/ocr`
 endpoint with a file parameter to get the OCR result of it out.
 
-A client working with this endpoint is not ready yet, but to test it real quick
+This endpoint can be tested using the aftermentioned client, but for a quick check
 you can run this:
 
 ```bash
