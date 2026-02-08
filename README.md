@@ -1,4 +1,12 @@
-# Nepali Transcription-er -> Romanized
+# Document categorizer thing
+
+- get ocr working
+- get image preprocessor working
+- get keyword grabbing working
+
+# Scrapped ideas
+
+## Nepali Transcription-er -> Romanized
 
 - use a speech to text model supporting Nepali for transcribing
     - OpenAI Whisper or Meta's MMS seem good for this purpose
