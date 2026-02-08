@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile
 from PIL import Image
 import cv2
@@ -51,6 +52,15 @@ def deskew(img, angle):
 
 
 app = FastAPI()
+
+# NOTE: this will not be needed when electron is needed, just using for the
+# one-page browser thingy
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/ocr")

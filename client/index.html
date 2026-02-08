@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <input type="file" id="file" />
+    <button onclick="send()">OCR</button>
+    <pre id="out"></pre>
+
+    <script>
+      async function send() {
+        const file = document.getElementById("file").files[0]
+        const form = new FormData()
+        form.append("file", file)
+
+        const res = await fetch("http://127.0.0.1:8000/ocr", {
+          method: "POST",
+          body: form
+        })
+
+        const data = await res.json()
+        document.getElementById("out").textContent = data.text
+      }
+    </script>
+  </body>
+</html>

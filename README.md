@@ -1,7 +1,7 @@
 # Document categorizer thing
 
 - get ocr working
-- get image preprocessor working
+- get image preprocessor working (NOTE: may not need if tesseract preprocessor works fine)
 - get keyword grabbing working
 
 ## OCR
@@ -34,3 +34,10 @@ curl -X POST "http://127.0.0.1:8000/ocr" \
 Replace `filename.jpg` with the file you want to test with.
 
 Note that you'll need `curl` and `jq` installed to run this command.
+
+## Client
+
+Uses the OCR server and later on the NLP server.
+
+Will eventually be a proper Electron app. For now its a simple proof-of-concept
+HTML page.
