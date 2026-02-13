@@ -1,6 +1,7 @@
 __pycache__
 .venv
 
+/assets
 *.jpg
 *.png
 *.pdf
