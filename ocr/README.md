@@ -33,3 +33,22 @@ curl -X POST "http://127.0.0.1:8000/ocr" \
 Replace `filename.jpg` with the file you want to test with.
 
 Note that you'll need `curl` and `jq` installed to run this command.
+
+## Notes on using text2image
+
+`text2image` provided by Tesseract will be of a lot of use when fine tuning.
+Provided a text file with some Nepali text, use this command:
+
+```bash
+text2image \
+    --text=data.txt \
+    --ptsize=8 \
+    --xsize=2000 \
+    --ysize=2000 \
+    --outputbase=output/sample \
+    --font="Noto Sans Devanagari"
+```
+
+For `--outputbase` you can choose some other value, in this case `output/sample`
+means the resulting output will be in a `output` folder and the files outputted
+will be an image named `sample.tif` and coordinate information in `sample.box`.
