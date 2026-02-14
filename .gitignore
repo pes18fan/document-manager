@@ -1,9 +1,11 @@
 __pycache__
 .venv
 
-/assets
 *.jpg
 *.png
 *.pdf
 *.tif
 out.txt
+
+/assets
+/tesstrain
