@@ -6,6 +6,7 @@ __pycache__
 *.pdf
 *.tif
 out.txt
+keywords.json
 
 /assets
 /tesstrain
