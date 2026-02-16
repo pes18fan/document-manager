@@ -8,14 +8,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 
-# CONFIG 
+# CONFIG
 TXT_DIR = SCRIPT_DIR / "text"  # directory containing .txt files
-STOPWORDS_FILE = SCRIPT_DIR / "stopwords.txt" # file containing Nepali stopwords (one per line)
+# file containing Nepali stopwords (one per line)
+STOPWORDS_FILE = SCRIPT_DIR / "stopwords.txt"
 TOP_K = 15        # keywords per document
 
 
 documents = []
 filenames = []
+
 
 def preprocess_nepali(text):
     # Remove Nepali purnaviram (fullstop) and common punctuation
@@ -43,10 +45,11 @@ documents = [preprocess_nepali(doc) for doc in documents]
 vectorizer = TfidfVectorizer(
     # min_df=2,      # appear in at least 2 documents
     # max_df=0.85,   # ignore too-common terms
-    
-    stop_words=nep_stopwords, # use nepali stopwords
-    ngram_range=(1, 2), # unigrams + bigrams
-    token_pattern=r"(?u)[^\s]+" # match all non-whitespace sequences (including punctuation)
+
+    stop_words=nep_stopwords,  # use nepali stopwords
+    ngram_range=(1, 2),  # unigrams + bigrams
+    # match all non-whitespace sequences (including punctuation)
+    token_pattern=r"(?u)[^\s]+"
 )
 
 
@@ -63,7 +66,8 @@ with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         row = tfidf_matrix[doc_idx].toarray()[0]
         top_indices = row.argsort()[-TOP_K:][::-1]
 
-        keywords = [(feature_names[i], round(row[i], 4)) for i in top_indices if row[i] > 0]
+        keywords = [(feature_names[i], round(row[i], 4))
+                    for i in top_indices if row[i] > 0]
 
         keywords_data[fname] = keywords
     json.dump(keywords_data, f, ensure_ascii=False, indent=2)
@@ -84,4 +88,5 @@ with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
 #         f.write("\n")
 
 
-print(f"Extracted keywords for {len(filenames)} documents. Results saved to {OUTPUT_FILE}")
+print(f"Extracted keywords for {len(filenames)
+                                } documents. Results saved to {OUTPUT_FILE}")
