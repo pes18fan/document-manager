@@ -37,7 +37,7 @@ make training MODEL_NAME=nep-ft START_MODEL=nep TESSDATA=./tessdata EPOCHS=10 LA
 
 Plot of CER:
 
-![CER plot](nitial_small/run_1/nep-ft.plot_cer.png)
+![CER plot](initial_small/run_1/nep-ft.plot_cer.png)
 
 Log plot of the same:
 
@@ -60,11 +60,11 @@ make training MODEL_NAME=nep-ft START_MODEL=nep TESSDATA=./tessdata EPOCHS=10 LE
 
 Plot of CER:
 
-![CER plot](initial_small/run_2/nep-ft-faster-training.plot_cer.png)
+![CER plot](initial_small/run_2/nep-ft-faster-learning.plot_cer.png)
 
 Log plot of the same:
 
-![log plot](initial_small/run_1/nep-ft-faster-training.plot_log.png)
+![log plot](initial_small/run_1/nep-ft-faster-learning.plot_log.png)
 
 Evaluation results poor, but this is expected as the dataset is small and the
 evaluation portion of the set is even smaller.
