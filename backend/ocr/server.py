@@ -1,14 +1,10 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile
-from pydantic import BaseModel
-from pathlib import Path
-from sklearn.feature_extraction.text import TfidfVectorizer
 from PIL import Image
 import cv2
 import numpy as np
 import pytesseract
 from pytesseract import Output
-import re
 
 app = FastAPI()
 
@@ -22,7 +18,7 @@ app.add_middleware(
 )
 
 
-TESSDATA_DIR = "./ocr/tessdata"
+TESSDATA_DIR = "./tessdata"
 
 
 @app.post("/ocr")
@@ -76,56 +72,3 @@ async def ocr(file: UploadFile):
             if data["text"][i].strip() != ""
         ],
     }
-
-
-STOPWORDS_FILE = Path(__file__).resolve().parent / "nlp" / "stopwords.txt"
-CORPUS = []
-STOPWORDS = []
-
-with open(STOPWORDS_FILE, encoding="utf-8") as f:
-    STOPWORDS = f.read().splitlines()
-
-TOP_K = 15  # keywords per document
-
-
-class KeywordsRequest(BaseModel):
-    text: str
-
-
-def preprocess_nepali(text: str):
-    # Remove Nepali purnaviram (fullstop) and common punctuation
-    text = re.sub(r"[।॥,;:!?(){}\[\]\"'—\-]", " ", text)
-
-    # Normalize whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
-
-
-@app.post("/keywords")
-def keywords(req: KeywordsRequest):
-    CORPUS.append(preprocess_nepali(req.text))
-
-    # tf-idf vectorization
-    vectorizer = TfidfVectorizer(
-        # min_df=2,      # appear in at least 2 documents
-        # max_df=0.85,   # ignore too-common terms
-        stop_words=STOPWORDS,  # use nepali stopwords
-        ngram_range=(1, 2),  # unigrams + bigrams
-        # match all non-whitespace sequences (including punctuation)
-        token_pattern=r"(?u)[^\s]+",
-    )
-
-    tfidf_matrix = vectorizer.fit_transform(CORPUS)
-    feature_names = vectorizer.get_feature_names_out()
-
-    row = tfidf_matrix[len(CORPUS) - 1].toarray()[0]
-    top_indices = row.argsort()[-TOP_K:][::-1]
-
-    keywords = [
-        {"word": feature_names[i], "count": round(row[i], 4)}
-        for i in top_indices
-        if row[i] > 0
-    ]
-
-    return {"keywords": keywords}

@@ -12,5 +12,4 @@ dependencies = [
     "pytesseract>=0.3.13",
     "python-multipart>=0.0.22",
     "uvicorn>=0.40.0",
-    "scikit-learn>=1.8.0",
 ]
