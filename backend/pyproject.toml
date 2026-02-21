@@ -1,5 +1,5 @@
 [project]
-name = "ocr"
+name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -12,4 +12,5 @@ dependencies = [
     "pytesseract>=0.3.13",
     "python-multipart>=0.0.22",
     "uvicorn>=0.40.0",
+    "scikit-learn>=1.8.0",
 ]

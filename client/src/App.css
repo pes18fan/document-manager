@@ -21,6 +21,12 @@
   align-items: start;
 }
 
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 @media (max-width: 768px) {
   .layout {
     grid-template-columns: 1fr;

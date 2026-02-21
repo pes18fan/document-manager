@@ -7,7 +7,7 @@ keywords.json
 /assets
 /tesstrain
 
-/ocr/dataset
+/backend/ocr/dataset
 
 node_modules
 dist

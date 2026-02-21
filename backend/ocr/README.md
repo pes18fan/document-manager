@@ -1,44 +1,8 @@
-# OCR
+# Preprocessing
 
-To test it, install the packages first (use uv)
-
-```bash
-uv sync
-```
-
-To test it out on one file, run `main.py`, choosing your file from within the
-code.
-
-```bash
-uv run main.py
-```
-
-For an interactive OCR server, run the server using uvicorn.
-
-```bash
-uv run uvicorn ocr_server:app --host 127.0.0.1 --port 8000
-```
-
-This will open up a HTTP server where you can make requests to the `/ocr`
-endpoint with a file parameter to get the OCR result of it out.
-
-This endpoint can be tested using the aftermentioned client, but for a quick check
-you can run this:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/ocr" \
-     -F "file=@filename.jpg" | jq -r ".text" > out.txt
-```
-
-Replace `filename.jpg` with the file you want to test with.
-
-Note that you'll need `curl` and `jq` installed to run this command.
-
-## Preprocessing
-
-No preprocessing has been implemented yet, as so far the preprocessing done by
-Tesseract itself is deemed to be enough; however some level of deskewing might
-be necessary to implement.
+Not much preprocessing has been implemented yet, as so far the preprocessing 
+done by Tesseract itself is deemed to be enough; however some level of deskewing 
+might be necessary to implement.
 
 To view the processed image that Tesseract generates before passing that image
 into its OCR section, you can set the `tessedit_write_images` parameter to `1`
@@ -48,9 +12,9 @@ when running tesseract, like so:
 tesseract file.jpg output -l "nep,eng" -c tessedit_write_images=1
 ```
 
-## Preparing dataset
+# Preparing dataset
 
-### Getting the documents
+## Getting the documents
 
 - retrieved from various government websites
     - Language Commission
@@ -60,7 +24,7 @@ tesseract file.jpg output -l "nep,eng" -c tessedit_write_images=1
     - Human Rights Commission
 - retrieved various images and pdfs
 
-### Cleaning up
+## Cleaning up
 
 Scripts used are in `scripts/`
 
@@ -76,7 +40,7 @@ Scripts used are in `scripts/`
     - obviously the extracted text is not going to be correct, this is corrected
         manually for each line
 
-### Dataset structure
+## Dataset structure
 
 - not sure on this yet
 - from what I know so far, it has:
@@ -89,7 +53,7 @@ Scripts used are in `scripts/`
             necessary to generate by hand?
         - `.lstmf` file, not sure what it is
 
-### Training
+## Training
 
 steps according to the ideas given by the example on `github.com/tesseract-ocr/tesstrain`'s
 readme.

@@ -3,7 +3,7 @@
 1. load `.txt` files from text directory
 2. calculate TF-IDF scores for each term
 3. extract top 15 keywords per document
-5. save results to `keywords_output.json`
+4. save results to `keywords_output.json`
 
 stopwords.txt contains common nepali stopwords
 
