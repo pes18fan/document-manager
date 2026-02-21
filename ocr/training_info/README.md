@@ -64,7 +64,7 @@ Plot of CER:
 
 Log plot of the same:
 
-![log plot](initial_small/run_1/nep-ft-faster-learning.plot_log.png)
+![log plot](initial_small/run_2/nep-ft-faster-learning.plot_log.png)
 
 Evaluation results poor, but this is expected as the dataset is small and the
 evaluation portion of the set is even smaller.
