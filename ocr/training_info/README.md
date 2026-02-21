@@ -37,16 +37,16 @@ make training MODEL_NAME=nep-ft START_MODEL=nep TESSDATA=./tessdata EPOCHS=10 LA
 
 Plot of CER:
 
-![CER plot](training_info/initial_small/run_2/nep-ft.plot_cer.png)
+![CER plot](nitial_small/run_1/nep-ft.plot_cer.png)
 
 Log plot of the same:
 
-![log plot](training_info/initial_small/run_1/nep-ft.plot_log.png)
+![log plot](initial_small/run_1/nep-ft.plot_log.png)
 
 Evaluation results poor, but this is expected as the dataset is small and the
 evaluation portion of the set is even smaller.
 
-Textual log of the training process is in `training_info/initial_small/run_1/training.log`
+Textual log of the training process is in `initial_small/run_1/training.log`
 
 ### Run 2
 
@@ -60,13 +60,13 @@ make training MODEL_NAME=nep-ft START_MODEL=nep TESSDATA=./tessdata EPOCHS=10 LE
 
 Plot of CER:
 
-![CER plot](training_info/initial_small/run_2/nep-ft-faster-training.plot_cer.png)
+![CER plot](initial_small/run_2/nep-ft-faster-training.plot_cer.png)
 
 Log plot of the same:
 
-![log plot](training_info/initial_small/run_1/nep-ft-faster-training.plot_log.png)
+![log plot](initial_small/run_1/nep-ft-faster-training.plot_log.png)
 
 Evaluation results poor, but this is expected as the dataset is small and the
 evaluation portion of the set is even smaller.
 
-Textual log of the training process is in `training_info/initial_small/run_1/training.log`
+Textual log of the training process is in `initial_small/run_2/training.log`
