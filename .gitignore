@@ -1,10 +1,6 @@
 __pycache__
 .venv
 
-*.jpg
-*.png
-*.pdf
-*.tif
 out.txt
 keywords.json
 
