@@ -9,7 +9,7 @@ uv sync
 Run the server using uvicorn.
 
 ```bash
-uv run uvicorn ocr_server:app --host 127.0.0.1 --port 8000
+uv run uvicorn server:app --host 127.0.0.1 --port 8000
 ```
 
 This will open up a HTTP server where you can make requests to the `/ocr`
