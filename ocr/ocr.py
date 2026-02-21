@@ -3,18 +3,19 @@ import cv2
 import numpy as np
 import pytesseract
 from pytesseract import Output
-from pprint import pprint
+
+TESSDATA_DIR = "./tessdata"
 
 
 def ocr(file: str):
-    # NOTE: the opencv logic may not be needed, thing is working well enough
-    # with tesseract's built-in preprocessing
-
     # converting from a PIL image to opencv image, not needed rn
     # cv_img = cv2.imdecode(
     #     np.frombuffer(img_bytes, np.uint8),
     #     cv2.IMREAD_COLOR
     # )
+
+    # NOTE: this opencv logic may not be needed, thing is working well enough
+    # with tesseract's built-in preprocessing
     cv_img = cv2.imread(file)
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
     gray = cv2.fastNlMeansDenoising(gray)
@@ -28,7 +29,7 @@ def ocr(file: str):
     out_image = Image.fromarray(conv)
 
     data = pytesseract.image_to_data(
-        out_image, lang="nep+eng", output_type=Output.DICT)
+        out_image, lang="nep-ft", output_type=Output.DICT)
 
     word_confs = [c for c in data['conf'] if c != -1]
     avg_conf = float(np.mean(word_confs)) if word_confs else 0.0

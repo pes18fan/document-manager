@@ -66,7 +66,6 @@ Log plot of the same:
 
 ![log plot](initial_small/run_2/nep-ft-faster-learning.plot_log.png)
 
-Evaluation results poor, but this is expected as the dataset is small and the
-evaluation portion of the set is even smaller.
+Apparently no difference.
 
 Textual log of the training process is in `initial_small/run_2/training.log`

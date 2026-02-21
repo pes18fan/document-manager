@@ -8,3 +8,6 @@ keywords.json
 /tesstrain
 
 /ocr/dataset
+
+node_modules
+dist

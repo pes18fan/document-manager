@@ -6,6 +6,8 @@ import numpy as np
 import pytesseract
 from pytesseract import Output
 
+TESSDATA_DIR = "./tessdata"
+
 
 # NOTE: may or may not be used
 def deskew(img, angle):
@@ -54,7 +56,7 @@ def deskew(img, angle):
 
 app = FastAPI()
 
-# NOTE: this will not be needed when electron is needed, just using for the
+# NOTE: this will not be needed when electron is used, just using for the
 # one-page browser thingy
 app.add_middleware(
     CORSMiddleware,
@@ -86,7 +88,11 @@ async def ocr(file: UploadFile):
     out_image = Image.fromarray(conv)
 
     data = pytesseract.image_to_data(
-        out_image, lang="nep+eng", output_type=Output.DICT)
+        out_image,
+        lang="nep-ft",
+        config=f'--tessdata-dir "{TESSDATA_DIR}"',
+        output_type=Output.DICT
+    )
 
     word_confs = [c for c in data['conf'] if c != -1]
     avg_conf = float(np.mean(word_confs)) if word_confs else 0.0
