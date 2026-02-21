@@ -1,0 +1,38 @@
+Loaded file data/nep/nep-ft-faster-learning.lstm, unpacking...
+Warning: LSTMTrainer deserialized an LSTMRecognizer!
+Code range changed from 110 to 123!
+Num (Extended) outputs,weights in Series:
+  1,48,0,1:1, 0
+Num (Extended) outputs,weights in Series:
+  C3,3:9, 0
+  Ft16:16, 160
+Total weights = 160
+  [C3,3Ft16]:16, 160
+  Mp3,3:16, 0
+  TxyLfys64:64, 20736
+  Lfx96:96, 61824
+  RxLrx96:96, 74112
+  Lfx512:512, 1247232
+  Fc123:123, 63099
+Total weights = 1467163
+Previous null char=2 mapped to 2
+Continuing from data/nep/nep-ft-faster-learning.lstm
+2 Percent improvement time=92, best error was 100 @ 0
+At iteration 92/100/100, mean rms=1.465%, delta=4.137%, BCER train=12.247%, BWER train=30.622%, skip ratio=0.000%, New best BCER = 12.247 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_12.247_92_100.checkpoint wrote checkpoint.
+2 Percent improvement time=69, best error was 12.247 @ 92
+At iteration 161/200/200, mean rms=1.132%, delta=2.680%, BCER train=8.131%, BWER train=21.367%, skip ratio=0.000%, New best BCER = 8.131 Transitioned to stage 1 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_8.131_161_200.checkpoint wrote checkpoint.
+2 Percent improvement time=126, best error was 12.247 @ 92
+At iteration 218/300/300, mean rms=0.971%, delta=2.105%, BCER train=6.452%, BWER train=17.567%, skip ratio=0.000%, New best BCER = 6.452 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_6.452_218_300.checkpoint wrote checkpoint.
+2 Percent improvement time=110, best error was 8.131 @ 161
+At iteration 271/400/400, mean rms=0.871%, delta=1.771%, BCER train=5.402%, BWER train=15.102%, skip ratio=0.000%, New best BCER = 5.402 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_5.402_271_400.checkpoint wrote checkpoint.
+2 Percent improvement time=157, best error was 8.131 @ 161
+At iteration 318/500/500, mean rms=0.799%, delta=1.530%, BCER train=4.688%, BWER train=13.358%, skip ratio=0.000%, New best BCER = 4.688 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_4.688_318_500.checkpoint wrote checkpoint.
+2 Percent improvement time=147, best error was 6.452 @ 218
+At iteration 365/600/600, mean rms=0.740%, delta=1.342%, BCER train=4.147%, BWER train=12.041%, skip ratio=0.000%, New best BCER = 4.147 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_4.147_365_600.checkpoint wrote checkpoint.
+2 Percent improvement time=181, best error was 6.452 @ 218
+At iteration 399/700/700, mean rms=0.688%, delta=1.193%, BCER train=3.700%, BWER train=10.848%, skip ratio=0.000%, New best BCER = 3.700 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_3.700_399_700.checkpoint wrote checkpoint.
+2 Percent improvement time=162, best error was 5.402 @ 271
+At iteration 433/800/800, mean rms=0.647%, delta=1.081%, BCER train=3.369%, BWER train=9.965%, skip ratio=0.000%, New best BCER = 3.369 wrote best model:data/nep-ft-faster-learning/checkpoints/nep-ft-faster-learning_3.369_433_800.checkpoint wrote checkpoint.
+2 Percent improvement time=174, best error was 5.402 @ 271
+At iteration 445/830/830, mean rms=0.638%, delta=1.055%, BCER train=3.305%, BWER train=9.836%, skip ratio=0.000%, New best BCER = 3.305 wrote checkpoint.
+Finished! Selected model with minimal training error rate (BCER) = 3.305
