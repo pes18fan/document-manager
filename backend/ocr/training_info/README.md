@@ -69,3 +69,23 @@ Log plot of the same:
 Apparently no difference.
 
 Textual log of the training process is in `initial_small/run_2/training.log`
+
+# Training final dataset
+
+## Dataset preparation
+
+- total of 747 lines + ??? synthetic lines
+
+### Patterns noticed in model mistakes
+
+This was noticed while preparing the dataset, as initial preparation of the
+dataset is based on predictions made by the existing Tesseract model; hence the
+results reflect what type of errors the base model made mostly.
+
+- ज mistaken for ज्ञ frequently
+- struggles differentiating ै and े
+- ब often mistaken for च
+- struggles with bold text
+- struggles a LOT with italicized text
+- छ mistaken for च
+- द mistaken for ब
