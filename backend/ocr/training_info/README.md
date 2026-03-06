@@ -82,10 +82,14 @@ This was noticed while preparing the dataset, as initial preparation of the
 dataset is based on predictions made by the existing Tesseract model; hence the
 results reflect what type of errors the base model made mostly.
 
-- ज mistaken for ज्ञ frequently
+- ज mistaken for ज्ञ
 - struggles differentiating ै and े
 - ब often mistaken for च
 - struggles with bold text
 - struggles a LOT with italicized text
 - छ mistaken for च
 - द mistaken for ब
+- ५ occasionally mistaken for ४
+- ो mistaken for ोै
+- ु mistaken for ्
+- भ mistaken for अ
