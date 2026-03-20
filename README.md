@@ -19,22 +19,20 @@ Some stuff this does:
 In this case, it is being used to manage the OCR dataset, with DagsHub as 
 the remote storage.
 
-To set it up on your device, first install it:
+To set it up on your device, first install it; it is a dependency for the whole
+project.
 
 ```bash
 uv tool install dvc
 ```
 
-If you don't have `uv`, run
-
-```bash
-pipx install dvc
-```
+Also make sure to install `dvc-s3` globally, to work with the S3-based 
+DagsHub storage.
 
 Now you can pull the dataset stored in DagsHub, using the relevant make command.
 
 ```bash
-make pull
+dvc pull
 ```
 
 This will open a browser window for authentication. After this, the dataset will
@@ -44,7 +42,7 @@ it now.
 After you're done, you can update the changes by pushing:
 
 ```bash
-make push
+dvc push
 ```
 
 This will archive the set and update it in DagsHub.
