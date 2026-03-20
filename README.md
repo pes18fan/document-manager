@@ -16,7 +16,7 @@ Some stuff this does:
 ## Using dvc to manage the OCR dataset
 
 [`dvc`](https://dvc.org) is a tool that can be used to manage datasets like Git.
-In this case, it is being used to manage the OCR dataset, with Google Drive as 
+In this case, it is being used to manage the OCR dataset, with DagsHub as 
 the remote storage.
 
 To set it up on your device, first install it:
@@ -31,7 +31,7 @@ If you don't have `uv`, run
 pipx install dvc
 ```
 
-Now you can pull the dataset stored in Drive, using the relevant make command.
+Now you can pull the dataset stored in DagsHub, using the relevant make command.
 
 ```bash
 make pull
@@ -47,4 +47,4 @@ After you're done, you can update the changes by pushing:
 make push
 ```
 
-This will archive the set and update it in Drive.
+This will archive the set and update it in DagsHub.
