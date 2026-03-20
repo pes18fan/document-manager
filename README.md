@@ -8,3 +8,4 @@
 
 - tesstrain
 - hocr-tools (specifically hocr-extract-images for turning pages to lines)
+- dvc (for managing the OCR dataset like git)
