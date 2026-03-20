@@ -72,3 +72,9 @@ act on an entire folder of page images and turn them into separate line images.
 
 This will also convert all the images into the tif format if they're not already
 in it.
+
+## line_from_page_synthetic.sh
+
+Variant of `line_from_page.py` (or rather the original shell script by
+Shreeshrii) to be used when creating synthetic data with text2image. **Do NOT
+use this script except in that specific circumstance.**
