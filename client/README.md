@@ -1,16 +1,42 @@
-# Client
+# sv
 
-Uses the OCR server and later on the NLP server.
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-Will in the future be wrapped in a proper Electron app. For now, its simply a
-web app.
+## Creating a project
 
-## Development
+If you're seeing this, you've probably already done this step. Congrats!
 
-```bash
-npm install
-npm run dev
+```sh
+# create a new project
+npx sv create my-app
 ```
 
-The dev server runs at `http://localhost:5173` by default. Make sure the OCR
-backend is running at `http://127.0.0.1:8000`.
+To recreate this project with the same configuration:
+
+```sh
+# recreate this project
+pnpm dlx sv@0.12.8 create --template minimal --types ts --add tailwindcss="plugins:none" --install pnpm client
+```
+
+## Developing
+
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+
+```sh
+npm run dev
+
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
+
+## Building
+
+To create a production version of your app:
+
+```sh
+npm run build
+```
+
+You can preview the production build with `npm run preview`.
+
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
