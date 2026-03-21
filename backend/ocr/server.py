@@ -1,10 +1,12 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile
 from PIL import Image
+from pytesseract import Output
+
+import database as db
+import pytesseract
 import cv2
 import numpy as np
-import pytesseract
-from pytesseract import Output
 
 app = FastAPI()
 
@@ -19,6 +21,11 @@ app.add_middleware(
 
 
 TESSDATA_DIR = "./tessdata"
+
+
+@app.on_event("startup")
+def on_startup():
+    db.init()
 
 
 @app.post("/ocr")
