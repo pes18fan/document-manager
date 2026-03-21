@@ -16,21 +16,36 @@ class Document(SQLModel, table=True):
     raw_text: str
     avg_conf: float
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    cluster_id: Optional[int] = None
+    category: Optional[str] = None
+
+
+class Keyword(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    document_id: int = Field(foreign_key="document.id")
+    keyword: str
+    tfidf_score: float
 
 
 def init():
-    # TODO: Remove this when the table structure is finalized
-    SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
 
 
-def save_document(filename, raw_text, avg_conf):
+def save_document(filename, raw_text, avg_conf, keywords, cluster_id, category):
     with Session(engine) as session:
-        doc = Document(filename=filename, raw_text=raw_text, avg_conf=avg_conf)
+        doc = Document(filename=filename, raw_text=raw_text,
+                       avg_conf=avg_conf, cluster_id=cluster_id, category=category)
         session.add(doc)
         session.commit()
         session.refresh(doc)
-        return doc
+
+        for word, score in keywords:
+            session.add(Keyword(document_id=doc.id,
+                        keyword=word, tfidf_score=score))
+        session.commit()
+
+        # return some relevant info
+        return {"id": doc.id, "category": category, "keywords": keywords}
 
 
 def get_all_documents():

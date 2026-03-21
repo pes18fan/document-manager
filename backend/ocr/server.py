@@ -1,9 +1,11 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, HTTPException
+from pydantic import BaseModel
 from PIL import Image
 from pytesseract import Output
 
 import database as db
+import nlp
 import pytesseract
 import cv2
 import numpy as np
@@ -26,6 +28,37 @@ TESSDATA_DIR = "./tessdata"
 @app.on_event("startup")
 def on_startup():
     db.init()
+    print("log: Connected to PostgreSQL DB")
+
+
+class SaveDocumentRequest(BaseModel):
+    filename: str
+    raw_text: str
+    avg_conf: float
+
+
+@app.post("/documents")
+async def save_document(req: SaveDocumentRequest):
+    keywords = nlp.extract_keywords(req.raw_text)
+    cluster_id, category = nlp.classify(req.raw_text)
+
+    doc = db.save_document(filename=req.filename, raw_text=req.raw_text,
+                           avg_conf=req.avg_conf, keywords=keywords,
+                           cluster_id=cluster_id, category=category)
+    return doc
+
+
+@app.get("/documents")
+def get_documents():
+    return db.get_all_documents()
+
+
+@app.get("/documents/{doc_id}")
+def get_document(doc_id: int):
+    doc = db.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
 
 
 @app.post("/ocr")
@@ -62,6 +95,7 @@ async def ocr(file: UploadFile):
     plain_text = "\n".join([" ".join(filter(None, l)) for l in lines.values()])
 
     return {
+        "filename": file.filename,
         "text": plain_text,
         "avg_conf": avg_conf,
         "words": [
