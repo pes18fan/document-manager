@@ -1,4 +1,4 @@
-# OCR
+# Backend
 
 To test it, install the packages first (use uv)
 
@@ -26,6 +26,34 @@ curl -X POST "http://127.0.0.1:8000/ocr" \
 Replace `filename.jpg` with the file you want to test with.
 
 Note that you'll need `curl` and `jq` installed to run this command.
+
+Additionally, the backend also provides the `/documents` endpoint which can
+take one of two requests:
+
+- POST, with the following request body structure:
+
+  ```typescript
+  interface SaveResult {
+      filename: string;
+      raw_text: string;
+      avg_conf: number;
+  }
+  ```
+
+  This will save the document to the PostgreSQL database and send back a
+  result with this interface:
+
+  ```typescript
+  interface SaveResult {
+      id: number;
+      category: string;
+      keywords: [string, number][];
+  }
+  ```
+- GET, to get all documents in the database.
+
+Additionally, there is a dynamic `/documents/{doc_id}` endpoint to grab a
+document with the database ID `doc_id`.
 
 ## How it works
 
