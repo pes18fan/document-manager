@@ -55,7 +55,7 @@ take one of two requests:
 Additionally, there is a dynamic `/documents/{doc_id}` endpoint to grab a
 document with the database ID `doc_id`.
 
-## How it works
+## How the OCR works
 
 The OCR is powered by Tesseract 5, using specifically the LSTM-based engine that
 was introduced in version 4.
@@ -160,3 +160,17 @@ In Tesseract 5, for recognition, the input is processed line-by-line, unlike the
 old recognizer which processed individual characters. This eliminates a lot of
 the character recognition work, which is performed by the LSTM implicitly while 
 reading the entire line at once.
+
+## How the NLP section works
+
+The NLP section has two main parts: a keyword extractor which finds and extracts
+words that have high importance in the corpus, and a classifier, which clusters
+similar documents together.
+
+### Keyword Extractor
+
+It is based on TF-IDF.
+
+### Classifier
+
+It is based on K-Means Clustering.
