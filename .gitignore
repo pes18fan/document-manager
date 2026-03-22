@@ -8,8 +8,8 @@ keywords.json
 /assets
 /tesstrain
 
-/backend/ocr/dataset
-/backend/ocr/dataset.tar.gz
+/backend/dataset
+/backend/dataset.tar.gz
 
 node_modules
 dist
