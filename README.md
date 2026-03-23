@@ -4,7 +4,7 @@ Some stuff this does:
 
 - Provide an interface to view documents. (TODO, a prototype works)
 - Run OCR on the documents to provide the text. (full finetuning TODO)
-- Extract top keywords from the document and use them to categorize them. (TODO, a prototype works)
+- Extract top keywords from the document and use them to categorize them. (done I think)
 - Allow manual organization using folders and tags (TODO)
 
 ## Tools used
