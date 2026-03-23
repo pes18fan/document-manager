@@ -275,6 +275,21 @@ a `stop_words` parameter to add a list of such stopwords. We prepared a list
 of common semantically meaningless or not highly meaningful features for Nepali
 in the file `stopwords.txt`, which we are using as the stopword list.
 
+##### Lemmatization
+
+One possible choice that we could have picked was implementing some form of
+lemmatization.
+
+Lemmatization is defined as turning inflected words into their base form. For
+example, turning the word "running" into "run", or in the case of Nepali,
+turning something like "केटाहरु" into "केटा" is a form of lemmatization.
+
+However, we avoided implementing lemmatization. The reason behind this was
+because naïve lemmatization by simply stripping suffixes proved to be
+error-prone; even libraries designed specifically for this purpose suffered
+from the issue of overstripping or understripping, and therefore creating
+meaningless features based on mangled words.
+
 ### Classifier
 
 It is based on K-Means clustering.
