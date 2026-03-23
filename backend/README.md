@@ -211,7 +211,7 @@ The second part of the algorithm deals with IDF (Inverse Document Frequency),
 calculated by this formula:
 
 $$
-idf(t, D) = \log \frac{N}{|\left\{d \in D : t \in d\right\}|}
+idf(t, D) = \log \frac{N}{|\left\\{d \in D : t \in d\right\\}|}
 $$
 
 It calculates the logarithm of the ratio of the number of documents divided by
