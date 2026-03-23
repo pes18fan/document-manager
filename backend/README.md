@@ -33,7 +33,7 @@ take one of two requests:
 - POST, with the following request body structure:
 
   ```typescript
-  interface SaveResult {
+  interface {
       filename: string;
       raw_text: string;
       avg_conf: number;
@@ -44,7 +44,7 @@ take one of two requests:
   result with this interface:
 
   ```typescript
-  interface SaveResult {
+  interface {
       id: number;
       category: string;
       keywords: [string, number][];
