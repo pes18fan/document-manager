@@ -7,11 +7,13 @@
         words: { text: string; conf: number; bbox: number[] }[];
     }
 
+    type Keyword = [string, number];
+
     // What the result of a "/document" POST request looks like.
     interface SaveResult {
         id: number;
         category: string;
-        keywords: [string, number][];
+        keywords: Keyword[];
     }
 
     // URL to the server

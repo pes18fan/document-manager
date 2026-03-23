@@ -37,8 +37,14 @@ class SaveDocumentRequest(BaseModel):
     avg_conf: float
 
 
+class SaveDocumentResponse(BaseModel):
+    id: int
+    category: str
+    keywords: list[tuple[str, float]]
+
+
 @app.post("/documents")
-async def save_document(req: SaveDocumentRequest):
+async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     keywords = nlp.extract_keywords(req.raw_text)
     cluster_id, category = nlp.classify(req.raw_text)
 
