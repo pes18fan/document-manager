@@ -333,23 +333,17 @@ In our case, `scikit-learn` handles this algorithm, and as there are maximum
 
 The classifier goes through the following steps.
 
-1. Picking $k$
-
-    $k$ is the number of clusters that we wish to divide the data into. This is
-    the "K" in K-Means clustering.
+1. We pick the value of $k$. $k$ is the number of clusters that we wish to 
+    divide the data into. This is the "K" in K-Means clustering.
 
     We picked an initial value of 5 for $k$ in our case. This was chosen because
     it is a good starter choice that allows for a substantial amount of data to be
     in each cluster, while also allowing for variation.
 
-2. Select initial clusters
-
-    Now, $k$ (5) data points are randomly selected in the vector space. These vectors 
+2. Now, $k$ (5) data points are randomly selected in the vector space. These vectors 
     are the initial cluster centroids.
 
-3. Assign points to cluster
-
-    We take the first point, which in this case will be a vector representing a
+3. We take the first point, which in this case will be a vector representing a
     certain random document, and measure how far it is from the 5 cluster centroids.
 
     The point is then assigned to the cluster that it is nearest to.
@@ -357,9 +351,7 @@ The classifier goes through the following steps.
     Then, we do this for all of the other clusters. Once this is done, every 
     point will have been assigned to a cluster.
 
-4. Calculate mean
-
-    Calculate the mean for each of the clusters. 
+4. Calculate the mean for each of the clusters. 
 
     For this, we calculate the mean of a single cluster by taking every point that 
     is in that cluster, and finding the mean value for the points. We repeat this
@@ -368,9 +360,7 @@ The classifier goes through the following steps.
     Once we have calculated the means, for each cluster, we replace the centroid
     of the cluster by the mean.
 
-5. Repeat
-
-    Repeat step 3 and 4, until an assignment does not make any changes to the 
+5. Repeat step 3 and 4, until an assignment does not make any changes to the 
     clustering. 
 
     In the case of `scikit-learn`, there is an additional stopping condition; 
@@ -385,3 +375,55 @@ handles this automatically via multiple restarts.
 Our classifier was trained on a total of 203 pieces of text. 17 were OCR outputs
 from OCR training documents, and the rest were pieces of text gathered from
 news sites on the internet (namely Ratopati, OnlineKhabar and EKantipur).
+
+#### Picking an ideal $k$
+
+If we do not know beforehand what the data looks like, it can be difficult to
+know what an ideal value for $k$ is. To get a good guess, a method known as the
+elbow plot can be utilized.
+
+##### Inertia
+
+After clustering has been done, each point/document has been assigned to a
+cluster which has a certain centroid. **Inertia** is defined as the sum of
+squared distances from every point to its assigned centroid.
+
+$$
+\mathrm{Inertia} = \sum_{c \in C} \sum_{\mathbf{p} \in c} \lVert \mathbf{p} - \mathbf{c}' \rVert^2
+$$
+
+Where, $c$ is a cluster in the set of all clusters $C$, $p$ is a point (document)
+in $c$, and $c'$ is the cluster centroid of $c$.
+
+Inertia describes how "tight" the clusters are, i.e. lower inertia means points
+are closer to their centers.
+
+Based on this, it might sound like simply minimizing inertia is a way to fix
+this issue; however only minimizing inertia is not ideal. This is because the
+value of inertia always decreases when $k$ is increased, and in the extreme
+case where $k$ is equal to the number of documents, the inertia has been
+minimized to zero as every document is its own cluster. However, that is not
+a meaningful act of classification.
+
+Therefore, the ideal way to work with this is to find the point where increasing
+the value of $k$ does not provide any more meaningful decrease in inertia i.e.
+improvement in compactness.
+
+The **elbow plot** plots the value of $k$ (x-axis) against the value of
+inertia (y-axis). This is done by training K-Means repeatedly with different
+values of $k$ starting at 2 until some chosen maximum, recording the inertia
+each time, and plotting the result.
+
+With a model trained on a solid dataset, the plot generally appears as a
+curve where the values drop steeply and flatten out at some point. That point
+where the curve flattens out, which is visible as an "elbow", is the point
+where further clusters are no longer worth it. Therefore, it is the optimal
+value of $k$.
+
+For smaller or less even datasets however, the elbow might not always be
+very obvious. This is fixed generally simply by adjusting the dataset with
+more varied data or filtering out irrelevant words.
+
+The value of 5 for $k$ that we chose was based on analysis via this
+elbow plot, as well as of the top keywords for each category for each $k$.
+Both methods converged on a value of 5.
