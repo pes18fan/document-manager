@@ -381,3 +381,7 @@ K-Means is not guaranteed to find the best possible clustering. For this purpose
 one option is to cluster several times with different starting points, and
 pick the result that has the least variation between the clusters. `scikit-learn`
 handles this automatically via multiple restarts.
+
+Our classifier was trained on a total of 203 pieces of text. 17 were OCR outputs
+from OCR training documents, and the rest were pieces of text gathered from
+news sites on the internet (namely Ratopati, OnlineKhabar and EKantipur).
