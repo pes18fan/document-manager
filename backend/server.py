@@ -48,9 +48,13 @@ async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     keywords = nlp.extract_keywords(req.raw_text)
     cluster_id, category = nlp.classify(req.raw_text)
 
-    doc = db.save_document(filename=req.filename, raw_text=req.raw_text,
-                           avg_conf=req.avg_conf, keywords=keywords,
-                           cluster_id=cluster_id, category=category)
+    try:
+        doc = db.save_document(filename=req.filename, raw_text=req.raw_text,
+                               avg_conf=req.avg_conf, keywords=keywords,
+                               cluster_id=cluster_id, category=category)
+    except db.DocumentExistsError as e:
+        raise HTTPException(status_code=409, detail=e)
+
     return doc
 
 

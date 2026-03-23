@@ -1,8 +1,11 @@
 from sqlmodel import SQLModel, Field, Session, create_engine, select
+from sqlalchemy.exc import IntegrityError
 from typing import Optional, Any
 from datetime import datetime
 from dotenv import load_dotenv
+from fastapi import HTTPException
 import os
+import hashlib
 
 load_dotenv()
 
@@ -15,12 +18,18 @@ engine = create_engine(DATABASE_URL)
 # cluster the document is saved to, and the category (cluster) name.
 class Document(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    # SHA256 hash of text, used for deduplication
+    content_hash: str = Field(unique=True)
     filename: str
     raw_text: str
     avg_conf: float
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
     cluster_id: Optional[int] = None
     category: Optional[str] = None
+
+
+class DocumentExistsError(Exception):
+    pass
 
 
 # A keyword present in the document corpus. Contains a keyword ID, ID to its
@@ -43,6 +52,11 @@ def init():
     SQLModel.metadata.create_all(engine)
 
 
+# Create a SHA256 hash of a string of text.
+def make_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 # Save a document to the database. This also saves its corresponding keywords
 # to the Keyword table. It returns a dictionary containing the database ID of
 # the saved document, the name of the category (cluster) it was saved to, and
@@ -51,8 +65,14 @@ def save_document(filename: str, raw_text: str, avg_conf: float,
                   keywords: list[str], cluster_id: int,
                   category: str) -> dict[str, Any]:
     with Session(engine) as session:
-        doc = Document(filename=filename, raw_text=raw_text,
-                       avg_conf=avg_conf, cluster_id=cluster_id, category=category)
+        try:
+            doc = Document(filename=filename, content_hash=make_hash(raw_text),
+                           raw_text=raw_text, avg_conf=avg_conf,
+                           cluster_id=cluster_id, category=category)
+        except IntegrityError:
+            raise DocumentExistsError(
+                "Document with this content already exists.")
+
         session.add(doc)
         session.commit()
         session.refresh(doc)

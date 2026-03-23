@@ -73,7 +73,6 @@ def extract_keywords(text: str) -> list[tuple[str, float]]:
     return [(feature_names[i], float(round(row[i], 4))) for i in top_indices if row[i] > 0]
 
 
-
 def classify(text: str) -> tuple[int, str]:
     vectorizer = joblib.load(VECTORIZER_FILE)
     model = joblib.load(MODEL_FILE)
