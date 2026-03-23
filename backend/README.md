@@ -389,11 +389,11 @@ cluster which has a certain centroid. **Inertia** is defined as the sum of
 squared distances from every point to its assigned centroid.
 
 $$
-\mathrm{Inertia} = \sum_{c \in C} \sum_{\mathbf{p} \in c} \lVert \mathbf{p} - \mathbf{c}' \rVert^2
+\mathrm{Inertia} = \sum_{c \in C} \sum_{\mathbf{p} \in c} \lVert \mathbf{p} - \mathbf{c'} \rVert^2
 $$
 
-Where, $c$ is a cluster in the set of all clusters $C$, $p$ is a point (document)
-in $c$, and $c'$ is the cluster centroid of $c$.
+Where, $c$ is a cluster in the set of all clusters $C$, $\mathbf{p}$ is a point (document)
+in $c$, and $\mathbf{c'}$ is the cluster centroid of $c$.
 
 Inertia describes how "tight" the clusters are, i.e. lower inertia means points
 are closer to their centers.
