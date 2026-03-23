@@ -189,7 +189,7 @@ Cluster 4: ['सेवा', 'स्वास्थ्य', 'सूचना', '�
 An elbow plot diagram was plotted using `plot_elbow.py` to find an ideal value
 for $k$:
 
-![Elbow Plot](plots/elbow.png)
+![Elbow Plot](plots/elbow_old.png)
 
 A noticeable dip is present after 7, however it is ideal to check the $k$
 values around it too, to see how it reflects in the keywords.
