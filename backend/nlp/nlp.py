@@ -14,19 +14,20 @@ N_CLUSTERS = 5
 with open(STOPWORDS_FILE, encoding="utf-8") as f:
     STOPWORDS = f.read().splitlines()
 
-# cluster id → human readable label, you fill these in after training
+# cluster id -> human readable label, were filled in after the 26 training runs
 CLUSTER_LABELS = {
-    0: "Uncategorized",
-    1: "Uncategorized",
-    2: "Uncategorized",
-    3: "Uncategorized",
-    4: "Uncategorized",
+    0: "Politics",
+    1: "Finance",
+    2: "Sports",
+    3: "Society",
+    4: "Health",
 }
 
 
 def preprocess(text: str) -> str:
-    text = re.sub(r"[।॥,;:!?(){}\[\]\"'—\-/\–]", " ", text)
+    text = re.sub(r"[।॥|,;:!?(){}\[\]\"'—\-/\–]", " ", text)
     text = re.sub(r"[०-९0-9]+", " ", text)
+    text = re.sub(r"[a-zA-Z]+", " ", text)  # strip english words
     text = re.sub(r"\s+", " ", text).strip()
     return text
 

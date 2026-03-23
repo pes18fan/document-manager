@@ -175,6 +175,7 @@ semantically useless information. It namely does the following things:
 
 - Remove special characters like `/`, `,`, `।` and so on.
 - Remove any English or Devanagari digits.
+- Remove all English letters.
 - Remove whitespace.
 
 ### Keyword Extractor

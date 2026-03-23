@@ -5,3 +5,4 @@
     - OnlineKhabar
     - Ratopati
     - Ekantipur
+- all texts preceded by `article` are scraped from Ekantipur
