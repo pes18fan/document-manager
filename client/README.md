@@ -1,5 +1,7 @@
 # client
 
+Based on [SvelteKit](https://svelte.dev)
+
 ## Developing
 
 Make sure you have installed [`pnpm`](https://pnpm.io) and [`nodejs`](https://nodejs.org).
