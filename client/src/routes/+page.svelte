@@ -1,4 +1,5 @@
 <script lang="ts">
+    // TODO: Replace this with an array of documents or something
     const arr = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 </script>
 

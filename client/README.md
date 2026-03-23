@@ -1,6 +1,7 @@
 # client
 
-Based on [SvelteKit](https://svelte.dev)
+Based on [SvelteKit](https://svelte.dev), uses [Tailwind CSS](https://tailwindcss.com)
+for the styling.
 
 ## Developing
 
