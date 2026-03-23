@@ -70,7 +70,8 @@ def extract_keywords(text: str) -> list[tuple[str, float]]:
     feature_names = vectorizer.get_feature_names_out()
     row = vec.toarray()[0]
     top_indices = row.argsort()[-TOP_K:][::-1]
-    return [(feature_names[i], round(row[i], 4)) for i in top_indices if row[i] > 0]
+    return [(feature_names[i], float(round(row[i], 4))) for i in top_indices if row[i] > 0]
+
 
 
 def classify(text: str) -> tuple[int, str]:
