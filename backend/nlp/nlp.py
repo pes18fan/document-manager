@@ -33,6 +33,10 @@ def preprocess(text: str) -> str:
 
 def train(documents: list[str]):
     """Train and save the vectorizer and KMeans model on a corpus."""
+    if len(documents) < N_CLUSTERS:
+        raise ValueError(f"Need at least {
+                         N_CLUSTERS} documents to train, got {len(documents)}")
+
     processed = [preprocess(doc) for doc in documents]
 
     vectorizer = TfidfVectorizer(

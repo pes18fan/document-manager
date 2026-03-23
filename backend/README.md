@@ -169,7 +169,85 @@ similar documents together.
 
 ### Keyword Extractor
 
-It is based on TF-IDF.
+It is based on TF-IDF (Term Frequency-Inverse Document Frequency).
+
+TF-IDF is an algorithm that is used to extract features from text. It is a
+Bag-of-Words like algorithm, where you compute a vectorized feature for each
+document in a corpus of documents.
+
+It is called Bag-of-Words like because the order of the words in the sentence 
+does not matter for this algorithm. This is one of the disadvantages of this
+algorithm, as the order of words can make a huge difference in their importance.
+However, this algorithm fits well with our current workflow as well as with the
+classifier which will be discussed in a bit.
+
+Given $n$ documents in a corpus, the algorithm will compute $n$ vectors, one for
+each, where each vector has numerical values corresponding to words found across
+the corpus.
+
+#### TF
+
+The first part of this algorithm calculates the TF (Term Frequency) for each
+word found in the document, calculated by this formula:
+
+$$
+tf(t, d) = \frac{f_{t,d}}{\sum_{t' \in d} f_{t', d}}
+$$
+
+It calculates the ratio of the number of occurences of a certain term $t$ in a
+document $d$ divided by the total number of terms in $d$.
+
+For each document, this TF value is be calculated for every term in that
+document as well as for terms that are not in that document but are in the
+corpus. These values are combined to form a vector. Doing this for every
+document in the corpus, we get the $n$ vectors corresponding to each.
+
+The role of the TF part is simply to find out which terms might be of importance
+based on how often they appear.
+
+#### IDF
+
+The second part of the algorithm deals with IDF (Inverse Document Frequency),
+calculated by this formula:
+
+$$
+idf(t, D) = \log \frac{N}{|\{d \in D : t \in d\}|}
+$$
+
+It calculates the logarithm of the ratio of the number of documents divided by
+the number of documents in the corpus $D$ that contain the term $t$. The
+logarithm of the ratio is used rather than the ratio itself, because the ratio
+can explode if there is a large number of documents or if very few documents have
+the term $t$. Any logarithm can be used; in the case of `scikit-learn` which
+our project uses, the natural log $\ln$ is used.
+
+Similarly as with the TF, the IDF is used to calculate individual values for $n$ 
+vectors, each vector corresponding to a document.
+
+The role of the IDF part is somewhat opposite of TF. For terms that are
+very common, the IDF value is quite low; for example a word appearing in every
+document actually gets an IDF value of zero. On the other hand, less frequent
+words are provided some more emphasis.
+
+After the TF and IDF vectors are computed separately, they are multiplied
+together to form the final TF-IDF vectors. Each document TF vector multiplies
+with its corresponding IDF vector, and the multiplication method is dot product.
+
+#### Stopwords
+
+There exist many different words that are often present a lot in documents,
+but do not carry any useful semantic meaning. For example, in English, these
+include articles like "the, a, an", common verbs, conjunctions, et cetera.
+
+The IDF section in the TF-IDF algorithm does help in minimizing such words
+to a certain extent, but it is better if they are not there at all. Therefore,
+to stop them from polluting the keyword list, we set them as stopwords.
+
+A stopword is a feature that should be stripped from the text before passing
+it over to the feature extractor. In our case, the `TfidfVectorizer` provides
+a `stop_words` parameter to add a list of such stopwords. We prepared a list
+of common semantically meaningless or not highly meaningful features for Nepali
+in the file `stopwords.txt`, which we are using as the stopword list.
 
 ### Classifier
 
