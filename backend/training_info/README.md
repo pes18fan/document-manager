@@ -245,7 +245,7 @@ Unfortunately, not much of a breakthrough here; with another plateau at around
 Textual log of the training process is in `final/run_5/training.log`
 
 From the five runs, the fourth (2 epochs and learning rate 0.0015) seems to
-provide the best results.
+provide the best results on unseen data.
 
 ### Comparison with base
 
