@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Button } from "$lib/components/ui/button/index.js";
     // What the result of an "/ocr" POST request looks like.
     interface OcrResult {
         filename: string;
@@ -212,4 +213,7 @@
     {/if}
 </div>
 
-<a href="/">Go home</a>
+<div class="p-8">
+    <Button onclick={() => window.location.href = "/"}>Go home</Button>
+</div>
+
