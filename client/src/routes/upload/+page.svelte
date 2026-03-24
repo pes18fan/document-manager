@@ -2,6 +2,16 @@
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input/index.js";
     import { Label } from "$lib/components/ui/label/index.js";
+    import {
+        AlertDialog,
+        AlertDialogContent,
+        AlertDialogHeader,
+        AlertDialogTitle,
+        AlertDialogDescription,
+        AlertDialogFooter,
+        AlertDialogAction,
+    } from "$lib/components/ui/alert-dialog";
+    
 
     // What the result of an "/ocr" POST request looks like.
     interface OcrResult {
@@ -46,6 +56,9 @@
     // An error that occured during any of the processes. Empty if no error.
     let error = $state("");
 
+    // If document has been successfully uploaded.
+    let uploadSuccess = $state(false);
+
     // Return a Tailwind class describing a color associated with the provided
     // confidence level.
     function confidenceColor(conf: number): string {
@@ -61,6 +74,7 @@
         result = null;
         saveResult = null;
         previewURL = "";
+        uploadSuccess = false;
     }
 
     // Function to execute when the selected file changes.
@@ -130,6 +144,7 @@
 
         saving = true;
         error = "";
+        uploadSuccess = false;
 
         try {
             const buffer = await file.arrayBuffer();
@@ -162,8 +177,8 @@
             const data: SaveResult = await res.json();
             saveResult = data;
 
-            // TODO: Replace alert with something nicer later
-            alert("Successfully saved document!");
+            uploadSuccess = true; // Set to true to trigger a redirect in the +page.svelte file.
+
         } catch (err) {
             error =
                 err instanceof Error ? err.message : "Something went wrong.";
@@ -216,6 +231,25 @@
                 {/each}
             </ul>
         {/if}
+
+        {#if uploadSuccess}
+            <AlertDialog open={uploadSuccess}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Success</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Document successfully saved!
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onclick={() => (uploadSuccess = false)}>
+                            OK
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        {/if}
+
     {:else if loading}
         <p>Loading result...</p>
     {/if}
