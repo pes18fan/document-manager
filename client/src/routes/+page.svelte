@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { Badge } from "$lib/components/ui/badge";
+    import * as Card from "$lib/components/ui/card";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
@@ -18,18 +20,28 @@
 
 <div class="grid grid-cols-4">
     {#each data.documents as doc}
-        <div
-            class="p-8 m-8 outline-2 outline-solid flex flex-col justify-center align-center min-w-0"
+        <Card.Root
+            class="p-8 m-8 flex flex-col justify-center align-center min-w-0"
         >
-            <p>Filename: {truncateMiddle(doc.filename)}</p>
-            <img
-                src={`${API_URL}/${doc.image_path}`}
-                alt="Preview"
-                class="max-w-xs max-h-64 rounded"
-            />
-            <p>Text: {doc.raw_text.slice(0, 50)}...</p>
-            <p>Category: {doc.category}</p>
-        </div>
+            <Card.Content class="flex justify-center align-center">
+                <img
+                    src={`${API_URL}/${doc.image_path}`}
+                    alt="Preview"
+                    class="max-w-xs max-h-64 rounded"
+                />
+            </Card.Content>
+            <Card.Footer class="flex flex-col items-start">
+                <p>{truncateMiddle(doc.filename)}</p>
+                <p class="text-muted-foreground text-sm">
+                    {doc.raw_text.slice(0, 50)}...
+                </p>
+                <Badge>{doc.category}</Badge>
+            </Card.Footer>
+        </Card.Root>
+
+        <!-- <div -->
+        <!--     class="p-8 m-8 outline-2 outline-solid flex flex-col justify-center align-center min-w-0" -->
+        <!-- ></div> -->
     {/each}
 </div>
 
