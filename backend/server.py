@@ -1,5 +1,6 @@
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from PIL import Image
 from pytesseract import Output
@@ -9,6 +10,9 @@ import nlp
 import pytesseract
 import cv2
 import numpy as np
+import base64
+from datetime import datetime
+from pathlib import Path
 
 app = FastAPI()
 
@@ -21,6 +25,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Path for image uploads, used to preview them in the frontend
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 TESSDATA_DIR = "./tessdata"
 
@@ -35,6 +44,7 @@ class SaveDocumentRequest(BaseModel):
     filename: str
     raw_text: str
     avg_conf: float
+    image_data: str
 
 
 class SaveDocumentResponse(BaseModel):
@@ -43,15 +53,38 @@ class SaveDocumentResponse(BaseModel):
     keywords: list[tuple[str, float]]
 
 
+class Document(BaseModel):
+    id: int
+    content_hash: str
+    filename: str
+    image_path: str
+    raw_text: str
+    avg_conf: float
+    uploaded_at: datetime
+    cluster_id: int
+    category: str
+
+
 @app.post("/documents")
 async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     keywords = nlp.extract_keywords(req.raw_text)
     cluster_id, category = nlp.classify(req.raw_text)
 
+    # save uploaded file first
+    content_hash = db.make_hash(req.raw_text)
+    ext = Path(req.filename).suffix
+    image_dest = UPLOAD_DIR / f"{content_hash}{ext}"
+
+    image_bytes = base64.b64decode(req.image_data)
+    with open(image_dest, "wb") as f:
+        f.write(image_bytes)
+
     try:
-        doc = db.save_document(filename=req.filename, raw_text=req.raw_text,
-                               avg_conf=req.avg_conf, keywords=keywords,
-                               cluster_id=cluster_id, category=category)
+        doc = db.save_document(filename=req.filename,
+                               image_path=str(image_dest),
+                               raw_text=req.raw_text, avg_conf=req.avg_conf,
+                               keywords=keywords, cluster_id=cluster_id,
+                               category=category)
     except db.DocumentExistsError as e:
         raise HTTPException(status_code=409, detail=e)
 
@@ -59,12 +92,12 @@ async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
 
 
 @app.get("/documents")
-def get_documents():
+def get_documents() -> list[Document]:
     return db.get_all_documents()
 
 
 @app.get("/documents/{doc_id}")
-def get_document(doc_id: int):
+def get_document(doc_id: int) -> Document:
     doc = db.get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -102,7 +135,8 @@ async def ocr(file: UploadFile):
         if line_num not in lines:
             lines[line_num] = []
         lines[line_num].append(data["text"][i])
-    plain_text = "\n".join([" ".join(filter(None, l)) for l in lines.values()])
+    plain_text = "\n".join([" ".join(filter(None, line))
+                           for line in lines.values()])
 
     return {
         "filename": file.filename,

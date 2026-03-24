@@ -3,7 +3,6 @@ from sqlalchemy.exc import IntegrityError
 from typing import Optional, Any
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import HTTPException
 import os
 import hashlib
 
@@ -21,6 +20,7 @@ class Document(SQLModel, table=True):
     # SHA256 hash of text, used for deduplication
     content_hash: str = Field(unique=True)
     filename: str
+    image_path: str  # path to the image, used to preview in frontend
     raw_text: str
     avg_conf: float
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
@@ -61,12 +61,13 @@ def make_hash(text: str) -> str:
 # to the Keyword table. It returns a dictionary containing the database ID of
 # the saved document, the name of the category (cluster) it was saved to, and
 # a list containing the keywords it contains.
-def save_document(filename: str, raw_text: str, avg_conf: float,
-                  keywords: list[str], cluster_id: int,
+def save_document(filename: str, image_path: str, raw_text: str,
+                  avg_conf: float, keywords: list[str], cluster_id: int,
                   category: str) -> dict[str, Any]:
     with Session(engine) as session:
         try:
-            doc = Document(filename=filename, content_hash=make_hash(raw_text),
+            doc = Document(filename=filename, image_path=image_path,
+                           content_hash=make_hash(raw_text),
                            raw_text=raw_text, avg_conf=avg_conf,
                            cluster_id=cluster_id, category=category)
         except IntegrityError:

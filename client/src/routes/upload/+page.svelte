@@ -31,7 +31,7 @@
     let saveResult: SaveResult | null = $state(null);
 
     // URL to a preview of the selected document.
-    let previewUrl = $state("");
+    let previewURL = $state("");
 
     // Whether the OCR result is loading or not.
     let loading = $state(false);
@@ -56,7 +56,7 @@
         error = "";
         result = null;
         saveResult = null;
-        previewUrl = "";
+        previewURL = "";
     }
 
     // Function to execute when the selected file changes.
@@ -66,8 +66,8 @@
         saveResult = null;
 
         const file = files?.[0];
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        previewUrl = file ? URL.createObjectURL(file) : "";
+        if (previewURL) URL.revokeObjectURL(previewURL);
+        previewURL = file ? URL.createObjectURL(file) : "";
     }
 
     // Function called to run OCR through a request to the server.
@@ -113,14 +113,29 @@
             return;
         }
 
+        if (!files) {
+            error = "No file selected.";
+            return;
+        }
+
+        const file = files.item(0);
+        if (!file) {
+            error = "No file selected.";
+            return;
+        }
+
         saving = true;
         error = "";
 
         try {
+            const buffer = await file.arrayBuffer();
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
             const body = JSON.stringify({
                 filename: result.filename,
                 raw_text: result.text,
                 avg_conf: result.avg_conf,
+                image_data: base64,
             });
 
             const res = await fetch(`${API_URL}/documents`, {
@@ -158,8 +173,8 @@
         type="file"
         onchange={onFileChange}
     />
-    {#if previewUrl != ""}
-        <img src={previewUrl} alt="Preview" class="max-w-xs max-h-64 rounded" />
+    {#if previewURL != ""}
+        <img src={previewURL} alt="Preview" class="max-w-xs max-h-64 rounded" />
     {/if}
     <button onclick={clear}>Clear</button>
     <button onclick={ocr}>Run OCR</button>

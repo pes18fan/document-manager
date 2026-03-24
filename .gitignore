@@ -8,9 +8,5 @@ keywords.json
 /assets
 /tesstrain
 
-/backend/nlp/nlp_text
-/backend/dataset
-/backend/dataset.tar.gz
-
 node_modules
 dist
