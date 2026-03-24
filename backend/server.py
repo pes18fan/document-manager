@@ -11,8 +11,22 @@ import pytesseract
 import cv2
 import numpy as np
 import base64
+import logging
+import logging.config
 from datetime import datetime
 from pathlib import Path
+from uvicorn.config import LOGGING_CONFIG
+
+log_config = LOGGING_CONFIG.copy()
+
+log_config["loggers"]["app"] = {
+    "handlers": ["default"],
+    "level": "INFO",
+    "propagate": False,
+}
+
+logging.config.dictConfig(log_config)
+logger = logging.getLogger("app")
 
 app = FastAPI()
 
@@ -37,7 +51,7 @@ TESSDATA_DIR = "./tessdata"
 @app.on_event("startup")
 def on_startup():
     db.init()
-    print("log: Connected to PostgreSQL DB")
+    logger.info("Connected to PostgreSQL DB.")
 
 
 class SaveDocumentRequest(BaseModel):
@@ -85,6 +99,7 @@ async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
                                raw_text=req.raw_text, avg_conf=req.avg_conf,
                                keywords=keywords, cluster_id=cluster_id,
                                category=category)
+        logging.info(f"Saved document {content_hash} to DB")
     except db.DocumentExistsError as e:
         raise HTTPException(status_code=409, detail=e)
 
