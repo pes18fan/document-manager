@@ -1,5 +1,7 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
+    import { Input } from "$lib/components/ui/input/index.js";
+    import { Label } from "$lib/components/ui/label/index.js";
 
     // What the result of an "/ocr" POST request looks like.
     interface OcrResult {
@@ -169,20 +171,22 @@
 <h2 class="text-3xl text-center">Upload a file</h2>
 
 <div class="flex flex-col gap-2 items-center justify-center p-10">
-    <input
-        accept="image/png, image/jpeg, image/tiff, application/pdf"
-        bind:files
-        type="file"
-        onchange={onFileChange}
-    />
+    <div>
+        <Input
+            accept="image/png, image/jpeg, image/tiff, application/pdf"
+            bind:files
+            type="file"
+            onchange={onFileChange}
+        />
+    </div>
     <p class="text-sm text-muted-foreground">
         Supported: PNG, JPEG, TIFF, PDF (single-page)
     </p>
     {#if previewURL != ""}
         <img src={previewURL} alt="Preview" class="max-w-xs max-h-64 rounded" />
     {/if}
-    <button onclick={clear}>Clear</button>
-    <button onclick={ocr}>Run OCR</button>
+    <Button onclick={ocr}>Run OCR</Button>
+    <Button onclick={clear}>Clear</Button>
 </div>
 
 <div class="flex flex-col gap-2 items-center justify-center p-10">
