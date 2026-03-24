@@ -3,8 +3,8 @@
 Some stuff this does:
 
 - Provide an interface to view documents. (nicer UI TODO)
-- Run OCR on the documents to provide the text. (full finetuning TODO)
-- Extract top keywords from the document and use them to categorize them. 
+- ~~Run OCR on the documents to provide the text.~~ (DONE, finetuning done too)
+- ~~Extract top keywords from the document and use them to categorize them.~~
     (DONE, minor tuning for classifier may be necessary)
 - ~~Allow manual organization using folders and tags~~ Cancelled unless time
     found before external defense
