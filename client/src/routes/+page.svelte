@@ -3,10 +3,61 @@
     import * as Card from "$lib/components/ui/card";
     import type { PageProps } from "./$types";
     import { Button } from "$lib/components/ui/button/index.js";
+    import { invalidateAll } from "$app/navigation";
+    import {
+        AlertDialog,
+        AlertDialogContent,
+        AlertDialogHeader,
+        AlertDialogTitle,
+        AlertDialogDescription,
+        AlertDialogFooter,
+        AlertDialogAction,
+        AlertDialogCancel,
+    } from "$lib/components/ui/alert-dialog";
 
     let { data }: PageProps = $props();
 
     const API_URL = "http://127.0.0.1:8000";
+
+    let deleteDialogOpen = $state(false);
+    let docToDelete: number | null = $state(null);
+    let isDeleting = $state(false);
+
+    async function confirmDelete(id: number) {
+        docToDelete = id;
+        deleteDialogOpen = true;
+    }
+
+    async function performDelete() {
+        if (docToDelete === null) return;
+
+        isDeleting = true;
+
+        try {
+            const res = await fetch(`${API_URL}/documents/${docToDelete}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status}`);
+            }
+
+            deleteDialogOpen = false;
+            docToDelete = null;
+
+            // Refresh the page data to reflect the deletion
+            await invalidateAll();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to delete document");
+            console.error(err);
+            isDeleting = false;
+        }
+    }
+
+    function cancelDelete() {
+        deleteDialogOpen = false;
+        docToDelete = null;
+    }
 
     // Truncate a filename from the middle.
     // "abcdefghijklmno.jpg" -> "abc...mno.jpg"
@@ -59,12 +110,37 @@
                     {doc.raw_text.slice(0, 50)}...
                 </p>
                 <Badge variant={getCategoryVariant(doc.category)}
-                    >{doc.category}</Badge
-                >
+                    >{doc.category}</Badge>
+            </Card.Footer>
+            <Card.Footer class="mt-auto">
+                <Button 
+                    variant="destructive" size="sm" 
+                    onclick={() => confirmDelete(doc.id)}>
+                    Delete
+                </Button>
             </Card.Footer>
         </Card.Root>
     {/each}
 </div>
+
+<AlertDialog open={deleteDialogOpen}>
+    <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+                Are you sure you want to delete this document? This action cannot be undone.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel onclick={cancelDelete} disabled={isDeleting}>
+                Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onclick={performDelete} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+        </AlertDialogFooter>
+    </AlertDialogContent>
+</AlertDialog>
 
 <div class="p-8">
     <Button onclick={() => (window.location.href = "/upload")}
