@@ -26,6 +26,6 @@
         <span class="sr-only">Toggle theme</span>
     </Button>
 
-    <h1 class="text-5xl text-center p-10 font-bold">Doc Manager</h1>
+    <h1 class="text-5xl text-center p-10 font-bold">Document Manager</h1>
     {@render children()}
 </main>
