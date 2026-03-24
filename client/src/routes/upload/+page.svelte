@@ -168,11 +168,12 @@
 
 <div class="flex flex-col gap-2 items-center justify-center p-10">
     <input
-        accept="image/png, image/jpeg, image/tiff"
+        accept="image/png, image/jpeg, image/tiff, application/pdf"
         bind:files
         type="file"
         onchange={onFileChange}
     />
+    <p class="text-sm text-muted-foreground">Supported: PNG, JPEG, TIFF, PDF (single-page)</p>
     {#if previewURL != ""}
         <img src={previewURL} alt="Preview" class="max-w-xs max-h-64 rounded" />
     {/if}
