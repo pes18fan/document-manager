@@ -119,6 +119,25 @@ def get_document(doc_id: int) -> Document:
     return doc
 
 
+@app.delete("/documents/{doc_id}")
+def delete_document(doc_id: int):
+
+    # Also delete the image file from disk
+    doc = db.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    image_path = Path(doc.image_path)
+    if image_path.exists():
+        image_path.unlink()
+    
+    success = db.delete_document(doc_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return {"ok": True}
+
+
 @app.post("/ocr")
 async def ocr(file: UploadFile):
     img_bytes = await file.read()

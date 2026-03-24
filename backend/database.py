@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, Session, create_engine, select
+from sqlmodel import SQLModel, Field, Session, create_engine, select, delete
 from sqlalchemy.exc import IntegrityError
 from typing import Optional, Any
 from datetime import datetime
@@ -85,6 +85,20 @@ def save_document(filename: str, image_path: str, raw_text: str,
 
         # return some relevant info
         return {"id": doc.id, "category": category, "keywords": keywords}
+
+
+def delete_document(doc_id: int) -> bool:
+    with Session(engine) as session:
+        doc = session.get(Document, doc_id)
+        if not doc:
+            return False
+
+        session.exec(delete(Keyword).where(Keyword.document_id == doc_id))
+        session.flush()  # ensure keywords are deleted before document
+        session.delete(doc)
+        session.commit()
+        return True
+
 
 
 # Select and return all the documents in the Documents table.
