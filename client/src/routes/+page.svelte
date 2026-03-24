@@ -2,6 +2,7 @@
     import { Badge } from "$lib/components/ui/badge";
     import * as Card from "$lib/components/ui/card";
     import type { PageProps } from "./$types";
+    import { Button } from "$lib/components/ui/button/index.js";
 
     let { data }: PageProps = $props();
 
@@ -45,4 +46,6 @@
     {/each}
 </div>
 
-<a href="/upload">Add a new file</a>
+<div class="p-8">
+    <Button onclick={() => window.location.href = "/upload"}>Add a new file</Button>
+</div>
