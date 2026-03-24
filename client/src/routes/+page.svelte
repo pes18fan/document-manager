@@ -19,13 +19,23 @@
     }
 
     // Map categories to badge variants or custom colors
-    function getCategoryVariant(category: string): "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" {
-        const categoryMap: Record<string, "default" | "secondary" | "destructive" | "outline" | "ghost" | "link"> = {
-            "Politics": "default",
-            "Finance": "secondary",
-            "Sports": "destructive",
-            "Society": "outline",
-            "Health": "ghost",
+    function getCategoryVariant(
+        category: string,
+    ): "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" {
+        const categoryMap: Record<
+            string,
+            | "default"
+            | "secondary"
+            | "destructive"
+            | "outline"
+            | "ghost"
+            | "link"
+        > = {
+            Politics: "default",
+            Finance: "secondary",
+            Sports: "destructive",
+            Society: "outline",
+            Health: "ghost",
         };
         return categoryMap[category] || "default";
     }
@@ -34,30 +44,30 @@
 <div class="grid grid-cols-4">
     {#each data.documents as doc}
         <Card.Root
-            class="p-8 m-8 flex flex-col justify-center align-center min-w-0"
+            class="p-8 m-8 flex flex-col justify-center items-center min-w-0"
         >
-            <Card.Content class="flex justify-center align-center">
+            <Card.Content class="flex justify-center items-center">
                 <img
                     src={`${API_URL}/${doc.image_path}`}
                     alt="Preview"
                     class="max-w-xs max-h-64 rounded"
                 />
             </Card.Content>
-            <Card.Footer class="flex flex-col items-start">
+            <Card.Footer class="flex flex-col items-start gap-2">
                 <p>{truncateMiddle(doc.filename)}</p>
                 <p class="text-muted-foreground text-sm">
                     {doc.raw_text.slice(0, 50)}...
                 </p>
-                <Badge variant={getCategoryVariant(doc.category)}>{doc.category}</Badge>
+                <Badge variant={getCategoryVariant(doc.category)}
+                    >{doc.category}</Badge
+                >
             </Card.Footer>
         </Card.Root>
-
-        <!-- <div -->
-        <!--     class="p-8 m-8 outline-2 outline-solid flex flex-col justify-center align-center min-w-0" -->
-        <!-- ></div> -->
     {/each}
 </div>
 
 <div class="p-8">
-    <Button onclick={() => window.location.href = "/upload"}>Add a new file</Button>
+    <Button onclick={() => (window.location.href = "/upload")}
+        >Add a new file</Button
+    >
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button/index.js";
+    import { Button } from "$lib/components/ui/button";
+
     // What the result of an "/ocr" POST request looks like.
     interface OcrResult {
         filename: string;
@@ -174,7 +175,9 @@
         type="file"
         onchange={onFileChange}
     />
-    <p class="text-sm text-muted-foreground">Supported: PNG, JPEG, TIFF, PDF (single-page)</p>
+    <p class="text-sm text-muted-foreground">
+        Supported: PNG, JPEG, TIFF, PDF (single-page)
+    </p>
     {#if previewURL != ""}
         <img src={previewURL} alt="Preview" class="max-w-xs max-h-64 rounded" />
     {/if}
@@ -214,6 +217,5 @@
 </div>
 
 <div class="p-8">
-    <Button onclick={() => window.location.href = "/"}>Go home</Button>
+    <Button onclick={() => (window.location.href = "/")}>Go home</Button>
 </div>
-

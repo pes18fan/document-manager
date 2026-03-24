@@ -5,10 +5,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
-    body {
-        @apply text-base bg-background text-foreground;
-    }
-
     main {
         @apply m-5;
     }
@@ -29,20 +25,8 @@
         @apply text-blue-500 underline;
     }
 
-    button {
-        @apply bg-gray-50 text-gray-950 px-2 py-1 rounded cursor-pointer border-none;
-    }
-
     button:hover {
-        @apply bg-gray-200 cursor-pointer;
-    }
-
-    input[type="file"]::file-selector-button {
-        @apply bg-gray-50 text-gray-950 px-2 py-1 rounded cursor-pointer border-none;
-    }
-
-    input[type="file"]::file-selector-button:hover {
-        @apply bg-gray-200;
+        @apply cursor-pointer;
     }
 
     * {
