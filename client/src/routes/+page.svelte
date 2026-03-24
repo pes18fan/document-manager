@@ -17,6 +17,18 @@
         const keep = Math.floor((maxLength - 3) / 2);
         return name.slice(0, keep) + "..." + name.slice(-keep) + ext;
     }
+
+    // Map categories to badge variants or custom colors
+    function getCategoryVariant(category: string): "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" {
+        const categoryMap: Record<string, "default" | "secondary" | "destructive" | "outline" | "ghost" | "link"> = {
+            "Politics": "default",
+            "Finance": "secondary",
+            "Sports": "destructive",
+            "Society": "outline",
+            "Health": "ghost",
+        };
+        return categoryMap[category] || "default";
+    }
 </script>
 
 <div class="grid grid-cols-4">
@@ -36,7 +48,7 @@
                 <p class="text-muted-foreground text-sm">
                     {doc.raw_text.slice(0, 50)}...
                 </p>
-                <Badge>{doc.category}</Badge>
+                <Badge variant={getCategoryVariant(doc.category)}>{doc.category}</Badge>
             </Card.Footer>
         </Card.Root>
 
