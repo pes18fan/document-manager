@@ -133,7 +133,12 @@
 
         try {
             const buffer = await file.arrayBuffer();
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
 
             const body = JSON.stringify({
                 filename: result.filename,
@@ -199,7 +204,7 @@
         {#if saving}
             <p>Saving to database...</p>
         {:else}
-            <button onclick={save}>Save Document</button>
+            <Button onclick={save}>Save Document</Button>
         {/if}
 
         {#if saveResult}
