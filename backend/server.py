@@ -12,6 +12,7 @@ import pytesseract
 import cv2
 import numpy as np
 import base64
+import re
 import logging
 import logging.config
 from datetime import datetime
@@ -159,6 +160,19 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
     return pages[0]
 
 
+def postprocess_text(text: str) -> str:
+    # normalize whitespace
+    text = re.sub(r' +', ' ', text)
+    # normalize newlines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # remove lines that are only punctuation or symbols with no Devanagari
+    lines = text.split('\n')
+    lines = [line for line in lines if re.search(r'[\u0900-\u097F]', line)]
+    # strip leading/trailing whitespace from each line
+    lines = [line.strip() for line in lines]
+    return '\n'.join(lines)
+
+
 @app.post("/ocr")
 async def ocr(file: UploadFile):
     img_bytes = await file.read()
@@ -173,10 +187,11 @@ async def ocr(file: UploadFile):
             img_bytes, np.uint8), cv2.IMREAD_COLOR)
         if cv_img is None:
             raise HTTPException(
-                status_code=400, detail="Invalid image file. Please upload a valid image or single-page PDF.")
+                status_code=400,
+                detail="Invalid image file. Please upload a valid image or single-page PDF."
+            )
 
-    # NOTE: the opencv logic may not be needed, thing is working well enough
-    # with tesseract's built-in preprocessing
+    # image preprocessing
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
     gray = cv2.fastNlMeansDenoising(gray)
     th = cv2.adaptiveThreshold(
@@ -195,7 +210,7 @@ async def ocr(file: UploadFile):
     word_confs = [c for c in data["conf"] if c != -1]
     avg_conf = float(np.mean(word_confs)) if word_confs else 0.0
 
-    # reconstruct plain text (optional)
+    # reconstruct plain text
     lines = {}
     for i, line_num in enumerate(data["line_num"]):
         if line_num not in lines:
@@ -203,6 +218,7 @@ async def ocr(file: UploadFile):
         lines[line_num].append(data["text"][i])
     plain_text = "\n".join([" ".join(filter(None, line))
                            for line in lines.values()])
+    plain_text = postprocess_text(plain_text)
 
     return {
         "filename": file.filename,

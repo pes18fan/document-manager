@@ -52,8 +52,9 @@ take one of two requests:
   ```
 - GET, to get all documents in the database.
 
-Additionally, there is a dynamic `/documents/{doc_id}` endpoint to grab a
-document with the database ID `doc_id`.
+Additionally, there is a dynamic `GET /documents/{doc_id}` endpoint to grab a
+document with the database ID `doc_id`, and a dynamic `DELETE /documents/{doc_id}`
+endpoint to delete the document.
 
 ## How the OCR works
 
