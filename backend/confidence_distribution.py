@@ -48,7 +48,7 @@ def main():
     finetuned_confs = get_confs("nep-ft-final")
 
     plt.hist(base_confs, alpha=0.5, label="Base model", bins=20)
-    plt.hist(finetuned_confs, alpha=0.5, label="Fine-tuned", bins=20)
+    plt.hist(finetuned_confs, alpha=0.5, label="Fine-tuned (final)", bins=20)
     plt.xlabel("Average Confidence %")
     plt.ylabel("Document count")
     plt.legend()

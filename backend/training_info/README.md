@@ -294,3 +294,13 @@ BCER eval=16.209, BWER eval=25.821
 
 The decrease in BWER is drastic, while there is also a sizeable decrease in
 BCER.
+
+#### Confidence comparison
+
+The `nep` and `nep-ft-final` models were compared in terms of their accuracy
+in transcribing 200 line images, selected randomly from the 762 in the dataset.
+This was done via the `confidence_distribution.py` script. The results showed
+clearly improved results for the `nep-ft-final` model over the base `nep`
+model. This is illustrated via the following histogram:
+
+![Confidence comparison](../confidence_comparison.png)
