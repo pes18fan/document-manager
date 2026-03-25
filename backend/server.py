@@ -184,7 +184,7 @@ async def ocr(file: UploadFile):
 
     data = pytesseract.image_to_data(
         out_image,
-        lang="nep-ft",
+        lang="nep-ft-final",
         config=f'--tessdata-dir "{TESSDATA_DIR}"',
         output_type=Output.DICT,
     )

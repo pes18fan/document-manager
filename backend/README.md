@@ -116,7 +116,9 @@ account for the LSTM engine introduced much later, goes as follows.
 
     Finally, some output text is provided.
 
-However, the newer version of Tesseract used by us uses a different method.
+However, the newer version of Tesseract used by us uses a different method,
+specifically in the recognition step (the rest of the pipeline is largely
+unchanged).
 
 Tesseract 4 and 5 use a type of recurrent neural network known as an LSTM (Long
 Short-Term Memory) for its OCR engine.
@@ -150,7 +152,7 @@ However, creating the training data for the LSTM-based recognizer is far
 easier, since it simply requires line images and corresponding transcriptions.
 In contrast, old versions required complex box files containg information on
 the coordinates for every single character, which is especially difficult to
-find for an **abugida** like Devanagari that does not have dedicated characters
+find for an abugida like Devanagari that does not have dedicated characters
 for every sound, and instead has "incomplete" diacritics for those sounds, which
 are more difficult to classify via a box file.
 
@@ -174,9 +176,13 @@ through a simple preprocessor function to strip either meaningless or
 semantically useless information. It namely does the following things:
 
 - Remove special characters like `/`, `,`, `।` and so on.
-- Remove any English or Devanagari digits.
-- Remove all English letters.
-- Remove whitespace.
+- Remove any English or Devanagari digits. While in some cases numbers can be
+    meaningful, usually they are not much more than harmful noise for the 
+    classifier.
+- Remove all English letters. Some documents may contain mixed English text,
+    however the project focuses specifically on Nepali, and therefore English
+    text that might sneak in is likely to just pollute the existing corpus.
+- Normalize whitespace.
 
 ### Keyword Extractor
 
@@ -231,7 +237,8 @@ the number of documents in the corpus $D$ that contain the term $t$. The
 logarithm of the ratio is used rather than the ratio itself, because the ratio
 can explode if there is a large number of documents or if very few documents have
 the term $t$. Any logarithm can be used; in the case of `scikit-learn` which
-our project uses, the natural log $\ln$ is used.
+our project uses, the natural log $\ln$ is used. Additionally, the `scikit-learn`
+form of the IDF is a special smoothed form.
 
 Similarly as with the TF, the IDF is used to calculate individual values for $n$ 
 vectors, each vector corresponding to a document.
@@ -239,7 +246,9 @@ vectors, each vector corresponding to a document.
 The role of the IDF part is somewhat opposite of TF. For terms that are
 very common, the IDF value is quite low; for example a word appearing in every
 document actually gets an IDF value of zero. On the other hand, less frequent
-words are provided some more emphasis.
+words are provided some more emphasis. In practice, the smoothed form
+of IDF provided by `scikit-learn` prevents zero values but does allow very low
+values for common words.
 
 After the TF and IDF vectors are computed separately, we calculate the TF-IDF
 score for each words by multiplying the word's TF score by its IDF score. This
@@ -307,7 +316,7 @@ For example, let's say you have a set of numbers like:
 
 Where each `x` represents a datapoint in the number line.
 
-Visibly, it is clear that the numbers can are separated into three different
+Visibly, it is clear that the numbers can be separated into three different
 portions. A computer can find this out by making use of the K-Means clustering
 algorithm.
 
@@ -425,5 +434,5 @@ very obvious. This is fixed generally simply by adjusting the dataset with
 more varied data or filtering out irrelevant words.
 
 The value of 5 for $k$ that we chose was based on analysis via this
-elbow plot, as well as of the top keywords for each category for each $k$.
-Both methods converged on a value of 5.
+elbow plot (plotting from $k$ = 2 to 10), as well as of the top keywords for 
+each category for each $k$. Both methods converged on a value of 5.
