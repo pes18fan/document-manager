@@ -303,4 +303,10 @@ This was done via the `confidence_distribution.py` script. The results showed
 clearly improved results for the `nep-ft-final` model over the base `nep`
 model. This is illustrated via the following histogram:
 
-![Confidence comparison](../confidence_comparison.png)
+![Confidence comparison](../confidence_comparison_line.png)
+
+However, doing this same comparison for page images yielded much more ambiguous
+results, which were slightly better for the base model. This illustrates that
+the performance in lines doesn't always translate to pages.
+
+![Confidence comparison](../confidence_comparison_page.png)

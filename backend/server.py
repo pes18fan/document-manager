@@ -131,7 +131,7 @@ def delete_document(doc_id: int):
     image_path = Path(doc.image_path)
     if image_path.exists():
         image_path.unlink()
-    
+
     success = db.delete_document(doc_id)
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -147,14 +147,15 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
     try:
         pages = convert_from_bytes(pdf_bytes)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to process PDF: {str(e)}")
-    
+        raise HTTPException(
+            status_code=400, detail=f"Failed to process PDF: {str(e)}")
+
     if len(pages) != 1:
         raise HTTPException(
             status_code=400,
             detail=f"PDF must have exactly 1 page, but has {len(pages)} pages."
         )
-    
+
     return pages[0]
 
 
@@ -168,9 +169,11 @@ async def ocr(file: UploadFile):
         cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     else:
         # Process as a regular image
-        cv_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+        cv_img = cv2.imdecode(np.frombuffer(
+            img_bytes, np.uint8), cv2.IMREAD_COLOR)
         if cv_img is None:
-            raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image or single-page PDF.")
+            raise HTTPException(
+                status_code=400, detail="Invalid image file. Please upload a valid image or single-page PDF.")
 
     # NOTE: the opencv logic may not be needed, thing is working well enough
     # with tesseract's built-in preprocessing
