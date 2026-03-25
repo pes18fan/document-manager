@@ -249,8 +249,9 @@ provide the best results on unseen data.
 
 ### Comparison with base
 
-Comparison done between the best fine tuned model (fourth run) using these two 
-`lstmeval` commands, by running on the data set aside for evaluation
+Comparison done between the best fine tuned model (fourth run), the model
+used for the progress defense trained on initial_small, and the base model,
+using these `lstmeval` commands, by running on the data set aside for evaluation
 purposes:
 
 ```bash
@@ -260,9 +261,15 @@ lstmeval \
   --eval_listfile data/nep-ft/list.eval \
   --traineddata data/nep-ft/nep-ft.traineddata
 
-# fine-tuned model  
+# fine-tuned model (initial_small)  
 lstmeval \
   --model data/nep-ft.traineddata \
+  --eval_listfile data/nep-ft/list.eval \
+  --traineddata data/nep-ft/nep-ft.traineddata
+
+# fine-tuned model  
+lstmeval \
+  --model data/nep-ft-final.traineddata \
   --eval_listfile data/nep-ft/list.eval \
   --traineddata data/nep-ft/nep-ft.traineddata
 ```
@@ -273,7 +280,13 @@ For the base model:
 BCER eval=26.349, BWER eval=47.088
 ```
 
-For fine tuned model:
+For initial_small fine tuned model:
+
+```
+BCER eval=19.740, BWER eval=32.907
+```
+
+For final fine tuned model:
 
 ```
 BCER eval=16.209, BWER eval=25.821
