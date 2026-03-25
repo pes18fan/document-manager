@@ -87,6 +87,7 @@ def save_document(filename: str, image_path: str, raw_text: str,
         return {"id": doc.id, "category": category, "keywords": keywords}
 
 
+# Delete a document from the Documents table.
 def delete_document(doc_id: int) -> bool:
     with Session(engine) as session:
         doc = session.get(Document, doc_id)
@@ -98,7 +99,6 @@ def delete_document(doc_id: int) -> bool:
         session.delete(doc)
         session.commit()
         return True
-
 
 
 # Select and return all the documents in the Documents table.
