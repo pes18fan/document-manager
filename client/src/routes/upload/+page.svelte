@@ -11,7 +11,6 @@
         AlertDialogFooter,
         AlertDialogAction,
     } from "$lib/components/ui/alert-dialog";
-    
 
     // What the result of an "/ocr" POST request looks like.
     interface OcrResult {
@@ -85,7 +84,18 @@
 
         const file = files?.[0];
         if (previewURL) URL.revokeObjectURL(previewURL);
-        previewURL = file ? URL.createObjectURL(file) : "";
+
+        if (!file) {
+            previewURL = "";
+            return;
+        }
+
+        // For PDFs, we don't preview them - conversion happens on backend
+        if (file.type === "application/pdf") {
+            previewURL = "";
+        } else {
+            previewURL = URL.createObjectURL(file);
+        }
     }
 
     // Function called to run OCR through a request to the server.
@@ -110,7 +120,16 @@
             });
 
             if (!res.ok) {
-                throw new Error(`Server error: ${res.status}`);
+                let errorMessage = `Server error: ${res.status}`;
+                try {
+                    const errorData = await res.json();
+                    if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+                } catch {
+                    // If response is not JSON, use status code message
+                }
+                throw new Error(errorMessage);
             }
 
             const data: OcrResult = await res.json();

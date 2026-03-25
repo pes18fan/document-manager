@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from PIL import Image
 from pytesseract import Output
+from pdf2image import convert_from_bytes
 
 import database as db
 import nlp
@@ -138,13 +139,41 @@ def delete_document(doc_id: int):
     return {"ok": True}
 
 
+def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
+    """
+    Convert a single-page PDF to a PIL Image.
+    Raises an HTTPException if the PDF does not have exactly one page.
+    """
+    try:
+        pages = convert_from_bytes(pdf_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process PDF: {str(e)}")
+    
+    if len(pages) != 1:
+        raise HTTPException(
+            status_code=400,
+            detail=f"PDF must have exactly 1 page, but has {len(pages)} pages."
+        )
+    
+    return pages[0]
+
+
 @app.post("/ocr")
 async def ocr(file: UploadFile):
     img_bytes = await file.read()
 
+    # Check if file is a PDF and convert it to an image
+    if file.content_type == "application/pdf" or file.filename.endswith(".pdf"):
+        img = pdf_to_image(img_bytes)
+        cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    else:
+        # Process as a regular image
+        cv_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+        if cv_img is None:
+            raise HTTPException(status_code=400, detail="Invalid image file. Please upload a valid image or single-page PDF.")
+
     # NOTE: the opencv logic may not be needed, thing is working well enough
     # with tesseract's built-in preprocessing
-    cv_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
     gray = cv2.fastNlMeansDenoising(gray)
     th = cv2.adaptiveThreshold(
