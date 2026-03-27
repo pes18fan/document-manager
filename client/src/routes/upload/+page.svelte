@@ -207,77 +207,144 @@
     }
 </script>
 
-<h2 class="text-3xl text-center">Upload a file</h2>
+<div class="container mx-auto p-6 max-w-7xl">
+    <h2 class="text-3xl font-bold mb-8">Upload Document</h2>
 
-<div class="flex flex-col gap-2 items-center justify-center p-10">
-    <div>
-        <Input
-            accept="image/png, image/jpeg, image/tiff, application/pdf"
-            bind:files
-            type="file"
-            onchange={onFileChange}
-        />
+    <!-- Two-paned layout -->
+    <div class="grid {result || loading ? 'grid-cols-2' : 'grid-cols-1'} gap-6 min-h-[600px]">
+        <!-- Left Pane: Upload Controls -->
+        <div class="flex flex-col {result || loading ? '' : 'items-center justify-center max-w-xl mx-auto w-full'}">
+            <div class="border border-border rounded-lg p-8 bg-card">
+                <h3 class="text-xl font-semibold mb-4">Select Document</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <Label for="file-upload" class="mb-2">Choose a file</Label>
+                        <Input
+                            id="file-upload"
+                            accept="image/png, image/jpeg, image/tiff, application/pdf"
+                            bind:files
+                            type="file"
+                            onchange={onFileChange}
+                            class="cursor-pointer"
+                        />
+                        <p class="text-sm text-muted-foreground mt-2">
+                            Supported: PNG, JPEG, TIFF, PDF (single-page)
+                        </p>
+                    </div>
+
+                    {#if previewURL != ""}
+                        <div class="mt-4">
+                            <Label class="mb-2">Preview</Label>
+                            <img 
+                                src={previewURL} 
+                                alt="Preview" 
+                                class="w-full max-h-64 object-contain rounded border border-border" 
+                            />
+                        </div>
+                    {/if}
+
+                    <div class="flex gap-2 pt-4">
+                        <Button onclick={ocr} disabled={loading || !files[0]} class="flex-1">
+                            {loading ? "Processing..." : "Run OCR"}
+                        </Button>
+                        <Button onclick={clear} variant="outline" disabled={loading}>
+                            Clear
+                        </Button>
+                    </div>
+
+                    {#if error != ""}
+                        <div class="bg-destructive/10 border border-destructive/20 rounded p-3 text-sm text-destructive">
+                            {error}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Pane: Results (only visible when there are results) -->
+        {#if result || loading}
+            <div class="border border-border rounded-lg p-8 bg-card overflow-auto">
+                <h3 class="text-xl font-semibold mb-4">Results</h3>
+                
+                {#if loading}
+                    <div class="flex items-center justify-center h-64">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p class="text-muted-foreground">Processing document...</p>
+                        </div>
+                    </div>
+                {:else if result}
+                    <div class="space-y-6">
+                        <!-- OCR Confidence -->
+                        <div>
+                            <Label class="mb-2">OCR Confidence</Label>
+                            <p class="text-2xl font-bold {confidenceColor(result.avg_conf)}">
+                                {result.avg_conf.toFixed(2)}%
+                            </p>
+                        </div>
+
+                        <!-- Extracted Text -->
+                        <div>
+                            <Label class="mb-2">Extracted Text</Label>
+                            <div class="bg-muted p-4 rounded border border-border whitespace-pre-wrap text-sm max-h-64 overflow-auto">
+                                {result.text}
+                            </div>
+                        </div>
+
+                        <!-- Save Button -->
+                        {#if !saveResult}
+                            <Button onclick={save} disabled={saving} class="w-full">
+                                {saving ? "Saving to database..." : "Save Document"}
+                            </Button>
+                        {/if}
+
+                        <!-- Save Results -->
+                        {#if saveResult}
+                            <div class="space-y-4 pt-4 border-t border-border">
+                                <div>
+                                    <Label class="mb-2">Category</Label>
+                                    <p class="text-lg font-semibold">{saveResult.category}</p>
+                                </div>
+                                
+                                <div>
+                                    <Label class="mb-2">Keywords</Label>
+                                    <div class="flex flex-wrap gap-2">
+                                        {#each saveResult.keywords as [word, score]}
+                                            <span class="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm">
+                                                {word} <span class="text-muted-foreground">({score.toFixed(2)})</span>
+                                            </span>
+                                        {/each}
+                                    </div>
+                                </div>
+
+                                <Button onclick={() => (window.location.href = "/")} variant="default" class="w-full">
+                                    View All Documents
+                                </Button>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        {/if}
     </div>
-    <p class="text-sm text-muted-foreground">
-        Supported: PNG, JPEG, TIFF, PDF (single-page)
-    </p>
-    {#if previewURL != ""}
-        <img src={previewURL} alt="Preview" class="max-w-xs max-h-64 rounded" />
-    {/if}
-    <Button onclick={ocr}>Run OCR</Button>
-    <Button onclick={clear}>Clear</Button>
 </div>
 
-<div class="flex flex-col gap-2 items-center justify-center p-10">
-    {#if result}
-        <p class="font-semibold {confidenceColor(result.avg_conf)}">
-            Confidence: {result.avg_conf}
-        </p>
-        <p>{result.text}</p>
-
-        {#if saving}
-            <p>Saving to database...</p>
-        {:else}
-            <Button onclick={save}>Save Document</Button>
-        {/if}
-
-        {#if saveResult}
-            <p class="font-semibold">Category: {saveResult.category}</p>
-            <p class="font-semibold">Keywords:</p>
-            <ul>
-                {#each saveResult.keywords as word, conf}
-                    <li>{word}, {conf}</li>
-                {/each}
-            </ul>
-        {/if}
-
-        {#if uploadSuccess}
-            <AlertDialog open={uploadSuccess}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Success</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Document successfully saved!
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogAction onclick={() => (uploadSuccess = false)}>
-                            OK
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        {/if}
-
-    {:else if loading}
-        <p>Loading result...</p>
-    {/if}
-
-    {#if error != ""}
-        <p class="text-red-100">{error}</p>
-    {/if}
-</div>
-
-<div class="p-8">
-    <Button onclick={() => (window.location.href = "/")}>Go home</Button>
-</div>
+<!-- Success Dialog -->
+{#if uploadSuccess}
+    <AlertDialog open={uploadSuccess}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Success</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Document successfully saved to the database!
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogAction onclick={() => (uploadSuccess = false)}>
+                    OK
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+{/if}

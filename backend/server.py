@@ -1,12 +1,14 @@
 from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from PIL import Image
 from pytesseract import Output
 from pdf2image import convert_from_bytes
 
 import database as db
+import s3_storage as s3
 import nlp
 import pytesseract
 import cv2
@@ -15,6 +17,7 @@ import base64
 import re
 import logging
 import logging.config
+import magic
 from datetime import datetime
 from pathlib import Path
 from uvicorn.config import LOGGING_CONFIG
@@ -46,6 +49,8 @@ app.add_middleware(
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+DOCUMENT_PREVIEW_BUCKET = "document_previews"
 
 TESSDATA_DIR = "./tessdata"
 
@@ -81,12 +86,16 @@ class Document(BaseModel):
     category: str
 
 
+class SaveDocumentPreviewRequest(BaseModel):
+    path: str
+
+
 @app.post("/documents")
 async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     keywords = nlp.extract_keywords(req.raw_text)
     cluster_id, category = nlp.classify(req.raw_text)
 
-    # save uploaded file first
+    # Save uploaded file to local cache
     content_hash = db.make_hash(req.raw_text)
     ext = Path(req.filename).suffix
     image_dest = UPLOAD_DIR / f"{content_hash}{ext}"
@@ -95,13 +104,25 @@ async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     with open(image_dest, "wb") as f:
         f.write(image_bytes)
 
+    # Upload to S3 (primary storage)
+    s3_success = s3.upload_file(DOCUMENT_PREVIEW_BUCKET, str(image_dest))
+    if not s3_success:
+        logger.warning(
+            f"Failed to upload {
+                content_hash} to S3, continuing with local storage only"
+        )
+
     try:
-        doc = db.save_document(filename=req.filename,
-                               image_path=str(image_dest),
-                               raw_text=req.raw_text, avg_conf=req.avg_conf,
-                               keywords=keywords, cluster_id=cluster_id,
-                               category=category)
-        logging.info(f"Saved document {content_hash} to DB")
+        doc = db.save_document(
+            filename=req.filename,
+            image_path=str(image_dest),
+            raw_text=req.raw_text,
+            avg_conf=req.avg_conf,
+            keywords=keywords,
+            cluster_id=cluster_id,
+            category=category,
+        )
+        logger.info(f"Saved document {content_hash} to DB and S3")
     except db.DocumentExistsError as e:
         raise HTTPException(status_code=409, detail=e)
 
@@ -121,18 +142,86 @@ def get_document(doc_id: int) -> Document:
     return doc
 
 
-@app.delete("/documents/{doc_id}")
-def delete_document(doc_id: int):
-
-    # Also delete the image file from disk
+@app.get("/documents/preview/{doc_id}")
+def get_document_preview(doc_id: int):
+    """
+    Returns the document preview image using cache-aside pattern.
+    Checks local cache first, downloads from S3 if not found.
+    """
     doc = db.get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
+    # Use the filename from image_path (e.g., "abc123.jpg" from "uploads/abc123.jpg")
+    image_filename = Path(doc.image_path).name
+    local_path = UPLOAD_DIR / image_filename
+
+    # Cache hit: serve from local storage
+    if local_path.exists():
+        logger.info(f"Cache hit: serving {image_filename} from local storage")
+        return FileResponse(local_path)
+
+    # Cache miss: download from S3 to local cache
+    logger.info(f"Cache miss: downloading {image_filename} from S3")
+    s3_success = s3.download_file(
+        DOCUMENT_PREVIEW_BUCKET, image_filename, str(local_path)
+    )
+
+    if not s3_success or not local_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Preview image not found in local cache or S3"
+        )
+
+    return FileResponse(local_path)
+
+
+@app.delete("/documents/preview/{doc_id}")
+def delete_document_preview(doc_id: int):
+    """
+    Delete document preview from both local cache and S3.
+    """
+    doc = db.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    image_filename = Path(doc.image_path).name
+    local_path = UPLOAD_DIR / image_filename
+
+    # Delete from local cache
+    if local_path.exists():
+        local_path.unlink()
+        logger.info(f"Deleted {image_filename} from local cache")
+
+    # Delete from S3
+    s3_success = s3.delete_file(DOCUMENT_PREVIEW_BUCKET, image_filename)
+    if not s3_success:
+        logger.warning(f"Failed to delete {image_filename} from S3")
+
+    return {"ok": True}
+
+
+@app.delete("/documents/{doc_id}")
+def delete_document(doc_id: int):
+    """
+    Delete document from database, local cache, and S3.
+    """
+    doc = db.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Delete from local cache
     image_path = Path(doc.image_path)
     if image_path.exists():
         image_path.unlink()
+        logger.info(f"Deleted {image_path.name} from local cache")
 
+    # Delete from S3
+    image_filename = image_path.name
+    s3_success = s3.delete_file(DOCUMENT_PREVIEW_BUCKET, image_filename)
+    if not s3_success:
+        logger.warning(f"Failed to delete {image_filename} from S3")
+
+    # Delete from database
     success = db.delete_document(doc_id)
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -154,7 +243,8 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
     if len(pages) != 1:
         raise HTTPException(
             status_code=400,
-            detail=f"PDF must have exactly 1 page, but has {len(pages)} pages."
+            detail=f"PDF must have exactly 1 page, but has {
+                len(pages)} pages.",
         )
 
     return pages[0]
@@ -162,15 +252,39 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
 
 def postprocess_text(text: str) -> str:
     # normalize whitespace
-    text = re.sub(r' +', ' ', text)
+    text = re.sub(r" +", " ", text)
     # normalize newlines
-    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
     # remove lines that are only punctuation or symbols with no Devanagari
-    lines = text.split('\n')
-    lines = [line for line in lines if re.search(r'[\u0900-\u097F]', line)]
+    lines = text.split("\n")
+    lines = [line for line in lines if re.search(r"[\u0900-\u097F]", line)]
     # strip leading/trailing whitespace from each line
     lines = [line.strip() for line in lines]
-    return '\n'.join(lines)
+    return "\n".join(lines)
+
+
+@app.post("/documents/preview/{doc_id}")
+def save_document_preview(req: SaveDocumentPreviewRequest):
+    """
+    Upload a document preview to S3 storage.
+    """
+    mime = magic.from_file(req.path)
+
+    match mime:
+        case "application/pdf" | "image/jpeg" | "image/png" | "image/tiff":
+            pass
+        case _:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid image file. Please upload a valid image or single-page PDF.",
+            )
+
+    s3_success = s3.upload_file(DOCUMENT_PREVIEW_BUCKET, req.path)
+    if not s3_success:
+        raise HTTPException(
+            status_code=500, detail="Failed to upload preview to S3")
+
+    return {"ok": True}
 
 
 @app.post("/ocr")
@@ -188,7 +302,7 @@ async def ocr(file: UploadFile):
         if cv_img is None:
             raise HTTPException(
                 status_code=400,
-                detail="Invalid image file. Please upload a valid image or single-page PDF."
+                detail="Invalid image file. Please upload a valid image or single-page PDF.",
             )
 
     # image preprocessing

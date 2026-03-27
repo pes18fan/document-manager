@@ -48,8 +48,13 @@
             // Refresh the page data to reflect the deletion
             await invalidateAll();
         } catch (err) {
-            alert(err instanceof Error ? err.message : "Failed to delete document");
+            alert(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to delete document",
+            );
             console.error(err);
+        } finally {
             isDeleting = false;
         }
     }
@@ -92,43 +97,122 @@
     }
 </script>
 
-<div class="grid grid-cols-4">
-    {#each data.documents as doc}
-        <Card.Root
-            class="p-8 m-8 flex flex-col justify-center items-center min-w-0"
+<div class="container mx-auto p-6">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold">My Documents</h2>
+            <p class="text-muted-foreground mt-1">
+                {data.documents.length} document{data.documents.length !== 1
+                    ? "s"
+                    : ""} in your collection
+            </p>
+        </div>
+    </div>
+
+    {#if data.documents.length === 0}
+        <div
+            class="flex flex-col items-center justify-center py-20 text-center"
         >
-            <Card.Content class="flex justify-center items-center">
-                <img
-                    src={`${API_URL}/${doc.image_path}`}
-                    alt="Preview"
-                    class="max-w-xs max-h-64 rounded"
-                />
-            </Card.Content>
-            <Card.Footer class="flex flex-col items-start gap-2">
-                <p>{truncateMiddle(doc.filename)}</p>
-                <p class="text-muted-foreground text-sm">
-                    {doc.raw_text.slice(0, 50)}...
-                </p>
-                <Badge variant={getCategoryVariant(doc.category)}
-                    >{doc.category}</Badge>
-            </Card.Footer>
-            <Card.Footer class="mt-auto">
-                <Button 
-                    variant="destructive" size="sm" 
-                    onclick={() => confirmDelete(doc.id)}>
-                    Delete
-                </Button>
-            </Card.Footer>
-        </Card.Root>
-    {/each}
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="text-muted-foreground mb-4"
+                ><path
+                    d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                /><polyline points="14 2 14 8 20 8" /></svg
+            >
+            <h3 class="text-xl font-semibold mb-2">No documents yet</h3>
+            <p class="text-muted-foreground mb-6">
+                Get started by uploading your first document
+            </p>
+            <Button onclick={() => (window.location.href = "/upload")}>
+                Upload Your First Document
+            </Button>
+        </div>
+    {:else}
+        <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+            {#each data.documents as doc}
+                <Card.Root
+                    class="overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                    <Card.Content class="p-0">
+                        <div
+                            class="aspect-[3/4] bg-muted flex items-center justify-center overflow-hidden"
+                        >
+                            <img
+                                src={`${API_URL}/documents/preview/${doc.id}`}
+                                alt={doc.filename}
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
+                    </Card.Content>
+                    <Card.Footer class="flex flex-col items-start gap-3 p-4">
+                        <div class="w-full">
+                            <p
+                                class="font-semibold text-sm truncate"
+                                title={doc.filename}
+                            >
+                                {truncateMiddle(doc.filename)}
+                            </p>
+                            <p
+                                class="text-muted-foreground text-xs mt-1 line-clamp-2"
+                            >
+                                {doc.raw_text.slice(0, 80)}...
+                            </p>
+                        </div>
+                        <div class="flex items-center justify-between w-full">
+                            <Badge variant={getCategoryVariant(doc.category)}>
+                                {doc.category}
+                            </Badge>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onclick={() => confirmDelete(doc.id)}
+                                title="Delete document"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    ><path d="M3 6h18" /><path
+                                        d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
+                                    /><path
+                                        d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+                                    /></svg
+                                >
+                            </Button>
+                        </div>
+                    </Card.Footer>
+                </Card.Root>
+            {/each}
+        </div>
+    {/if}
 </div>
 
+<!-- Delete Confirmation Dialog -->
 <AlertDialog open={deleteDialogOpen}>
     <AlertDialogContent>
         <AlertDialogHeader>
             <AlertDialogTitle>Delete Document</AlertDialogTitle>
             <AlertDialogDescription>
-                Are you sure you want to delete this document? This action cannot be undone.
+                Are you sure you want to delete this document? This action
+                cannot be undone.
             </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -141,9 +225,3 @@
         </AlertDialogFooter>
     </AlertDialogContent>
 </AlertDialog>
-
-<div class="p-8">
-    <Button onclick={() => (window.location.href = "/upload")}
-        >Add a new file</Button
-    >
-</div>
