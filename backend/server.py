@@ -108,8 +108,7 @@ async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     s3_success = s3.upload_file(DOCUMENT_PREVIEW_BUCKET, str(image_dest))
     if not s3_success:
         logger.warning(
-            f"Failed to upload {
-                content_hash} to S3, continuing with local storage only"
+            f"Failed to upload {content_hash} to S3, continuing with local storage only"
         )
 
     try:
@@ -140,6 +139,57 @@ def get_document(doc_id: int) -> Document:
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
+
+
+class UpdateDocumentTextRequest(BaseModel):
+    raw_text: str
+
+
+class UpdateDocumentTextResponse(BaseModel):
+    id: int
+    category: str
+    keywords: list[tuple[str, float]]
+
+
+@app.put("/documents/{doc_id}/text")
+async def update_document_text(
+    doc_id: int, req: UpdateDocumentTextRequest
+) -> UpdateDocumentTextResponse:
+    """
+    Update the raw text of a document and re-run NLP processing.
+    This will:
+    1. Update the document's raw_text and content_hash
+    2. Delete all old keywords
+    3. Extract new keywords using TF-IDF
+    4. Re-classify the document into a category
+    5. Save new keywords to the database
+    """
+    # Check if document exists
+    doc = db.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Re-run NLP processing on the new text
+    keywords = nlp.extract_keywords(req.raw_text)
+    cluster_id, category = nlp.classify(req.raw_text)
+
+    # Update document in database with new text and NLP results
+    result = db.update_document_text(
+        doc_id=doc_id,
+        new_text=req.raw_text,
+        keywords=keywords,
+        cluster_id=cluster_id,
+        category=category,
+    )
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    logger.info(
+        f"Updated document {doc_id}: new category={category}, {len(keywords)} keywords"
+    )
+
+    return result
 
 
 @app.get("/documents/preview/{doc_id}")
@@ -237,14 +287,12 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
     try:
         pages = convert_from_bytes(pdf_bytes)
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to process PDF: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Failed to process PDF: {str(e)}")
 
     if len(pages) != 1:
         raise HTTPException(
             status_code=400,
-            detail=f"PDF must have exactly 1 page, but has {
-                len(pages)} pages.",
+            detail=f"PDF must have exactly 1 page, but has {len(pages)} pages.",
         )
 
     return pages[0]
@@ -281,8 +329,7 @@ def save_document_preview(req: SaveDocumentPreviewRequest):
 
     s3_success = s3.upload_file(DOCUMENT_PREVIEW_BUCKET, req.path)
     if not s3_success:
-        raise HTTPException(
-            status_code=500, detail="Failed to upload preview to S3")
+        raise HTTPException(status_code=500, detail="Failed to upload preview to S3")
 
     return {"ok": True}
 
@@ -297,8 +344,7 @@ async def ocr(file: UploadFile):
         cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     else:
         # Process as a regular image
-        cv_img = cv2.imdecode(np.frombuffer(
-            img_bytes, np.uint8), cv2.IMREAD_COLOR)
+        cv_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
         if cv_img is None:
             raise HTTPException(
                 status_code=400,
@@ -330,8 +376,7 @@ async def ocr(file: UploadFile):
         if line_num not in lines:
             lines[line_num] = []
         lines[line_num].append(data["text"][i])
-    plain_text = "\n".join([" ".join(filter(None, line))
-                           for line in lines.values()])
+    plain_text = "\n".join([" ".join(filter(None, line)) for line in lines.values()])
     plain_text = postprocess_text(plain_text)
 
     return {

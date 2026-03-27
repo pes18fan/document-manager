@@ -1,9 +1,9 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card";
     import * as AlertDialog from "$lib/components/ui/alert-dialog";
+    import * as Dialog from "$lib/components/ui/dialog";
     import * as Empty from "$lib/components/ui/empty";
-    import * as Sheet from "$lib/components/ui/sheet";
-    import { Separator } from "$lib/components/ui/separator";
+    import { Textarea } from "$lib/components/ui/textarea";
     import { Badge } from "$lib/components/ui/badge";
     import type { PageProps } from "./$types";
     import { Button } from "$lib/components/ui/button";
@@ -17,11 +17,16 @@
     let docToDelete: number | null = $state(null);
     let isDeleting = $state(false);
 
-    // Document detail sheet state
-    let detailSheetOpen = $state(false);
+    // Document detail dialog state
+    let detailDialogOpen = $state(false);
     let selectedDocId: number | null = $state(null);
     let selectedDocDetails: any = $state(null);
     let loadingDetails = $state(false);
+
+    // Text editing state
+    let isEditingText = $state(false);
+    let editedText = $state("");
+    let isSavingText = $state(false);
 
     // Get the selected document from the data
     let selectedDoc = $derived(
@@ -71,10 +76,10 @@
         docToDelete = null;
     }
 
-    // Open document detail sheet
+    // Open document detail dialog
     async function openDocumentDetail(id: number) {
         selectedDocId = id;
-        detailSheetOpen = true;
+        detailDialogOpen = true;
         loadingDetails = true;
 
         try {
@@ -99,9 +104,82 @@
     }
 
     function closeDocumentDetail() {
-        detailSheetOpen = false;
+        detailDialogOpen = false;
         selectedDocId = null;
         selectedDocDetails = null;
+        isEditingText = false;
+        editedText = "";
+    }
+
+    function startEditingText() {
+        if (selectedDoc) {
+            editedText = selectedDoc.raw_text;
+            isEditingText = true;
+        }
+    }
+
+    function cancelEditingText() {
+        isEditingText = false;
+        editedText = "";
+    }
+
+    async function saveEditedText() {
+        if (!selectedDocId || !editedText.trim()) {
+            return;
+        }
+
+        isSavingText = true;
+
+        try {
+            const res = await fetch(
+                `${API_URL}/documents/${selectedDocId}/text`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        raw_text: editedText,
+                    }),
+                },
+            );
+
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status}`);
+            }
+
+            const result = await res.json();
+
+            // Update the local document data
+            if (selectedDoc) {
+                selectedDoc.raw_text = editedText;
+                selectedDoc.category = result.category;
+                selectedDoc.cluster_id = result.cluster_id;
+            }
+
+            // Update the details with new keywords
+            selectedDocDetails.keywords = result.keywords.map(
+                ([keyword, score]: [string, number]) => ({
+                    keyword,
+                    tfidf_score: score,
+                }),
+            );
+
+            // Refresh the page data to reflect changes in the card view
+            await invalidateAll();
+
+            isEditingText = false;
+            editedText = "";
+        } catch (err) {
+            alert(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to update document text",
+            );
+            console.error(err);
+        } finally {
+            isSavingText = false;
+        }
     }
 
     // Truncate a filename from the middle.
@@ -254,23 +332,22 @@
     {/if}
 </div>
 
-<!-- Document Detail Sheet -->
-<Sheet.Root
-    open={detailSheetOpen}
+<!-- Document Detail Dialog -->
+<Dialog.Root
+    open={detailDialogOpen}
     onOpenChange={(open) => {
         if (!open) closeDocumentDetail();
     }}
 >
-    <Sheet.Content
-        side="right"
-        class="w-full sm:max-w-2xl overflow-y-auto p-10"
+    <Dialog.Content
+        class="max-w-[80vw]! sm:max-w-[80vw]! max-h-[95vh] overflow-hidden flex flex-col"
     >
-        <Sheet.Header>
-            <Sheet.Title>Document Details</Sheet.Title>
-            <Sheet.Description>
+        <Dialog.Header>
+            <Dialog.Title>Document Details</Dialog.Title>
+            <Dialog.Description>
                 View all information about this document
-            </Sheet.Description>
-        </Sheet.Header>
+            </Dialog.Description>
+        </Dialog.Header>
 
         {#if loadingDetails}
             <div class="flex items-center justify-center py-20">
@@ -284,181 +361,263 @@
                 </div>
             </div>
         {:else if selectedDoc && selectedDocDetails}
-            <div class="space-y-6 py-6">
-                <!-- Document Image -->
-                <div>
-                    <h3 class="text-sm font-semibold mb-3">Preview Image</h3>
-                    <div
-                        class="border border-border rounded-lg overflow-hidden bg-muted"
-                    >
-                        <img
-                            src={`${API_URL}/documents/preview/${selectedDoc.id}`}
-                            alt={selectedDoc.filename}
-                            class="w-full h-auto"
-                        />
-                    </div>
-                </div>
-
-                <Separator />
-
-                <!-- Basic Information -->
-                <div class="space-y-4">
-                    <h3 class="text-sm font-semibold">Basic Information</h3>
-
-                    <div class="grid gap-3">
+            <!-- Scrollable content area -->
+            <div class="overflow-y-auto flex-1 pr-2">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Document Image -->
                         <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Document ID
-                            </p>
-                            <p class="text-sm font-mono">{selectedDoc.id}</p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Filename
-                            </p>
-                            <p class="text-sm break-all">
-                                {selectedDoc.filename}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Uploaded At
-                            </p>
-                            <p class="text-sm">
-                                {new Date(
-                                    selectedDoc.uploaded_at,
-                                ).toLocaleString()}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Category
-                            </p>
-                            <div>
-                                <Badge
-                                    variant={getCategoryVariant(
-                                        selectedDoc.category,
-                                    )}
-                                >
-                                    {selectedDoc.category}
-                                </Badge>
+                            <h3 class="text-sm font-semibold mb-3">
+                                Preview Image
+                            </h3>
+                            <div
+                                class="border border-border rounded-lg overflow-hidden bg-muted"
+                            >
+                                <img
+                                    src={`${API_URL}/documents/preview/${selectedDoc.id}`}
+                                    alt={selectedDoc.filename}
+                                    class="w-full h-auto max-h-96 object-contain"
+                                />
                             </div>
                         </div>
 
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                OCR Confidence
-                            </p>
-                            <p
-                                class="text-sm font-semibold {selectedDoc.avg_conf >=
-                                80
-                                    ? 'text-green-600'
-                                    : selectedDoc.avg_conf >= 50
-                                      ? 'text-yellow-600'
-                                      : 'text-red-600'}"
-                            >
-                                {selectedDoc.avg_conf.toFixed(2)}%
-                            </p>
+                        <!-- Basic Information -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold">
+                                Basic Information
+                            </h3>
+
+                            <div class="grid gap-3">
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Document ID
+                                    </p>
+                                    <p class="text-sm font-mono">
+                                        {selectedDoc.id}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Filename
+                                    </p>
+                                    <p class="text-sm break-all">
+                                        {selectedDoc.filename}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Uploaded At
+                                    </p>
+                                    <p class="text-sm">
+                                        {new Date(
+                                            selectedDoc.uploaded_at,
+                                        ).toLocaleString()}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Category
+                                    </p>
+                                    <div>
+                                        <Badge
+                                            variant={getCategoryVariant(
+                                                selectedDoc.category,
+                                            )}
+                                        >
+                                            {selectedDoc.category}
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        OCR Confidence
+                                    </p>
+                                    <p
+                                        class="text-sm font-semibold {selectedDoc.avg_conf >=
+                                        80
+                                            ? 'text-green-600'
+                                            : selectedDoc.avg_conf >= 50
+                                              ? 'text-yellow-600'
+                                              : 'text-red-600'}"
+                                    >
+                                        {selectedDoc.avg_conf.toFixed(2)}%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Details -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold">
+                                Technical Details
+                            </h3>
+
+                            <div class="grid gap-3">
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Content Hash (SHA256)
+                                    </p>
+                                    <p
+                                        class="text-xs font-mono break-all bg-muted p-2 rounded"
+                                    >
+                                        {selectedDoc.content_hash}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Cluster ID
+                                    </p>
+                                    <p class="text-sm">
+                                        {selectedDoc.cluster_id ?? "N/A"}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p
+                                        class="text-xs text-muted-foreground mb-1"
+                                    >
+                                        Image Path
+                                    </p>
+                                    <p
+                                        class="text-xs font-mono break-all bg-muted p-2 rounded"
+                                    >
+                                        {selectedDoc.image_path}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <Separator />
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Full Text Content -->
+                        <div class="space-y-4 flex-1">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold">
+                                    Extracted Text
+                                </h3>
+                                {#if !isEditingText}
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onclick={startEditingText}
+                                    >
+                                        Edit Text
+                                    </Button>
+                                {/if}
+                            </div>
 
-                <!-- Technical Details -->
-                <div class="space-y-4">
-                    <h3 class="text-sm font-semibold">Technical Details</h3>
-
-                    <div class="grid gap-3">
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Content Hash (SHA256)
-                            </p>
-                            <p
-                                class="text-xs font-mono break-all bg-muted p-2 rounded"
-                            >
-                                {selectedDoc.content_hash}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Cluster ID
-                            </p>
-                            <p class="text-sm">
-                                {selectedDoc.cluster_id ?? "N/A"}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs text-muted-foreground mb-1">
-                                Image Path
-                            </p>
-                            <p
-                                class="text-xs font-mono break-all bg-muted p-2 rounded"
-                            >
-                                {selectedDoc.image_path}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <Separator />
-
-                <!-- Keywords -->
-                {#if selectedDocDetails.keywords && selectedDocDetails.keywords.length > 0}
-                    <div class="space-y-4">
-                        <h3 class="text-sm font-semibold">Keywords (TF-IDF)</h3>
-                        <div class="flex flex-wrap gap-2">
-                            {#each selectedDocDetails.keywords as keyword}
-                                <span
-                                    class="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-xs"
+                            {#if isEditingText}
+                                <div class="space-y-3">
+                                    <Textarea
+                                        bind:value={editedText}
+                                        class="font-mono text-sm resize-none"
+                                        rows={25}
+                                        placeholder="Edit the extracted text..."
+                                    />
+                                    <div class="flex gap-2">
+                                        <Button
+                                            onclick={saveEditedText}
+                                            disabled={isSavingText ||
+                                                !editedText.trim()}
+                                            size="sm"
+                                        >
+                                            {isSavingText
+                                                ? "Saving..."
+                                                : "Save Changes"}
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onclick={cancelEditingText}
+                                            disabled={isSavingText}
+                                            size="sm"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground">
+                                        Note: Saving will re-run NLP analysis
+                                        and update keywords & category.
+                                    </p>
+                                </div>
+                            {:else}
+                                <div
+                                    class="bg-muted p-4 rounded-lg border border-border max-h-[500px] overflow-y-auto"
                                 >
-                                    {keyword.keyword}
-                                    <span class="text-muted-foreground ml-1">
-                                        ({keyword.tfidf_score.toFixed(4)})
-                                    </span>
-                                </span>
-                            {/each}
+                                    <p class="text-sm whitespace-pre-wrap">
+                                        {selectedDoc.raw_text}
+                                    </p>
+                                </div>
+                            {/if}
                         </div>
-                    </div>
 
-                    <Separator />
-                {/if}
-
-                <!-- Full Text Content -->
-                <div class="space-y-4">
-                    <h3 class="text-sm font-semibold">Extracted Text</h3>
-                    <div
-                        class="bg-muted p-4 rounded-lg border border-border max-h-96 overflow-y-auto"
-                    >
-                        <p class="text-sm whitespace-pre-wrap">
-                            {selectedDoc.raw_text}
-                        </p>
+                        <!-- Keywords -->
+                        {#if selectedDocDetails.keywords && selectedDocDetails.keywords.length > 0}
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-semibold">
+                                    Keywords (TF-IDF)
+                                </h3>
+                                <div class="flex flex-wrap gap-2">
+                                    {#each selectedDocDetails.keywords as keyword}
+                                        <span
+                                            class="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-xs"
+                                        >
+                                            {keyword.keyword}
+                                            <span
+                                                class="text-muted-foreground ml-1"
+                                            >
+                                                ({keyword.tfidf_score.toFixed(
+                                                    4,
+                                                )})
+                                            </span>
+                                        </span>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
                     </div>
                 </div>
             </div>
 
-            <Sheet.Footer class="flex gap-2">
+            <Dialog.Footer class="flex gap-2 mt-4">
                 <Button variant="outline" onclick={closeDocumentDetail}>
                     Close
                 </Button>
                 <Button
                     variant="destructive"
-                    onclick={() => {
+                    onclick={async () => {
                         closeDocumentDetail();
-                        confirmDelete(selectedDoc.id);
+                        if (selectedDoc) {
+                            await confirmDelete(selectedDoc.id);
+                        }
                     }}
                 >
                     Delete Document
                 </Button>
-            </Sheet.Footer>
+            </Dialog.Footer>
         {/if}
-    </Sheet.Content>
-</Sheet.Root>
+    </Dialog.Content>
+</Dialog.Root>
 
 <!-- Delete Confirmation Dialog -->
 <AlertDialog.Root open={deleteDialogOpen}>

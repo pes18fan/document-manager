@@ -61,26 +61,35 @@ def make_hash(text: str) -> str:
 # to the Keyword table. It returns a dictionary containing the database ID of
 # the saved document, the name of the category (cluster) it was saved to, and
 # a list containing the keywords it contains.
-def save_document(filename: str, image_path: str, raw_text: str,
-                  avg_conf: float, keywords: list[str], cluster_id: int,
-                  category: str) -> dict[str, Any]:
+def save_document(
+    filename: str,
+    image_path: str,
+    raw_text: str,
+    avg_conf: float,
+    keywords: list[str],
+    cluster_id: int,
+    category: str,
+) -> dict[str, Any]:
     with Session(engine) as session:
         try:
-            doc = Document(filename=filename, image_path=image_path,
-                           content_hash=make_hash(raw_text),
-                           raw_text=raw_text, avg_conf=avg_conf,
-                           cluster_id=cluster_id, category=category)
+            doc = Document(
+                filename=filename,
+                image_path=image_path,
+                content_hash=make_hash(raw_text),
+                raw_text=raw_text,
+                avg_conf=avg_conf,
+                cluster_id=cluster_id,
+                category=category,
+            )
         except IntegrityError:
-            raise DocumentExistsError(
-                "Document with this content already exists.")
+            raise DocumentExistsError("Document with this content already exists.")
 
         session.add(doc)
         session.commit()
         session.refresh(doc)
 
         for word, score in keywords:
-            session.add(Keyword(document_id=doc.id,
-                        keyword=word, tfidf_score=score))
+            session.add(Keyword(document_id=doc.id, keyword=word, tfidf_score=score))
         session.commit()
 
         # return some relevant info
@@ -111,3 +120,50 @@ def get_all_documents():
 def get_document(doc_id: int):
     with Session(engine) as session:
         return session.get(Document, doc_id)
+
+
+# Get all keywords for a specific document.
+def get_document_keywords(doc_id: int) -> list[Keyword]:
+    with Session(engine) as session:
+        keywords = session.exec(
+            select(Keyword).where(Keyword.document_id == doc_id)
+        ).all()
+        return list(keywords)
+
+
+# Update a document's raw text and re-process NLP. This will:
+# 1. Update the raw_text and content_hash
+# 2. Delete all old keywords
+# 3. Save new keywords
+# 4. Update category and cluster_id
+def update_document_text(
+    doc_id: int,
+    new_text: str,
+    keywords: list[tuple[str, float]],
+    cluster_id: int,
+    category: str,
+) -> dict[str, Any]:
+    with Session(engine) as session:
+        doc = session.get(Document, doc_id)
+        if not doc:
+            return None
+
+        # Delete old keywords
+        session.exec(delete(Keyword).where(Keyword.document_id == doc_id))
+        session.flush()
+
+        # Update document with new text and NLP results
+        doc.raw_text = new_text
+        doc.content_hash = make_hash(new_text)
+        doc.cluster_id = cluster_id
+        doc.category = category
+
+        session.add(doc)
+        session.commit()
+
+        # Add new keywords
+        for word, score in keywords:
+            session.add(Keyword(document_id=doc.id, keyword=word, tfidf_score=score))
+        session.commit()
+
+        return {"id": doc.id, "category": category, "keywords": keywords}
