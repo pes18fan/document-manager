@@ -1,19 +1,13 @@
 <script lang="ts">
-    import { Badge } from "$lib/components/ui/badge";
     import * as Card from "$lib/components/ui/card";
+    import * as AlertDialog from "$lib/components/ui/alert-dialog";
+    import * as Empty from "$lib/components/ui/empty";
+    import * as Sheet from "$lib/components/ui/sheet";
+    import { Separator } from "$lib/components/ui/separator";
+    import { Badge } from "$lib/components/ui/badge";
     import type { PageProps } from "./$types";
-    import { Button } from "$lib/components/ui/button/index.js";
+    import { Button } from "$lib/components/ui/button";
     import { invalidateAll } from "$app/navigation";
-    import {
-        AlertDialog,
-        AlertDialogContent,
-        AlertDialogHeader,
-        AlertDialogTitle,
-        AlertDialogDescription,
-        AlertDialogFooter,
-        AlertDialogAction,
-        AlertDialogCancel,
-    } from "$lib/components/ui/alert-dialog";
 
     let { data }: PageProps = $props();
 
@@ -22,6 +16,19 @@
     let deleteDialogOpen = $state(false);
     let docToDelete: number | null = $state(null);
     let isDeleting = $state(false);
+
+    // Document detail sheet state
+    let detailSheetOpen = $state(false);
+    let selectedDocId: number | null = $state(null);
+    let selectedDocDetails: any = $state(null);
+    let loadingDetails = $state(false);
+
+    // Get the selected document from the data
+    let selectedDoc = $derived(
+        selectedDocId
+            ? data.documents.find((d) => d.id === selectedDocId)
+            : null,
+    );
 
     async function confirmDelete(id: number) {
         docToDelete = id;
@@ -62,6 +69,39 @@
     function cancelDelete() {
         deleteDialogOpen = false;
         docToDelete = null;
+    }
+
+    // Open document detail sheet
+    async function openDocumentDetail(id: number) {
+        selectedDocId = id;
+        detailSheetOpen = true;
+        loadingDetails = true;
+
+        try {
+            // Fetch full document details including keywords
+            const res = await fetch(`${API_URL}/documents/${id}`);
+
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status}`);
+            }
+
+            selectedDocDetails = await res.json();
+        } catch (err) {
+            console.error("Failed to fetch document details:", err);
+            alert(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to load document details",
+            );
+        } finally {
+            loadingDetails = false;
+        }
+    }
+
+    function closeDocumentDetail() {
+        detailSheetOpen = false;
+        selectedDocId = null;
+        selectedDocDetails = null;
     }
 
     // Truncate a filename from the middle.
@@ -110,43 +150,49 @@
     </div>
 
     {#if data.documents.length === 0}
-        <div
-            class="flex flex-col items-center justify-center py-20 text-center"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="64"
-                height="64"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="text-muted-foreground mb-4"
-                ><path
-                    d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
-                /><polyline points="14 2 14 8 20 8" /></svg
-            >
-            <h3 class="text-xl font-semibold mb-2">No documents yet</h3>
-            <p class="text-muted-foreground mb-6">
-                Get started by uploading your first document
-            </p>
-            <Button onclick={() => (window.location.href = "/upload")}>
-                Upload Your First Document
-            </Button>
-        </div>
+        <Empty.Root class="border border-dashed">
+            <Empty.Header>
+                <Empty.Media variant="icon">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="64"
+                        height="64"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-muted-foreground mb-4"
+                        ><path
+                            d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                        /><polyline points="14 2 14 8 20 8" /></svg
+                    >
+                </Empty.Media>
+                <Empty.Title>No Documents</Empty.Title>
+                <Empty.Description>
+                    Get started by uploading your first document.
+                </Empty.Description>
+            </Empty.Header>
+            <Empty.Content>
+                <Button
+                    onclick={() => (window.location.href = "/upload")}
+                    size="sm">Upload your first document</Button
+                >
+            </Empty.Content>
+        </Empty.Root>
     {:else}
         <div
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         >
             {#each data.documents as doc}
                 <Card.Root
-                    class="overflow-hidden hover:shadow-lg transition-shadow"
+                    class="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    onclick={() => openDocumentDetail(doc.id)}
                 >
                     <Card.Content class="p-0">
                         <div
-                            class="aspect-[3/4] bg-muted flex items-center justify-center overflow-hidden"
+                            class="aspect-3/4 bg-muted flex items-center justify-center overflow-hidden"
                         >
                             <img
                                 src={`${API_URL}/documents/preview/${doc.id}`}
@@ -177,7 +223,10 @@
                                 variant="ghost"
                                 size="icon"
                                 class="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onclick={() => confirmDelete(doc.id)}
+                                onclick={(e) => {
+                                    e.stopPropagation();
+                                    confirmDelete(doc.id);
+                                }}
                                 title="Delete document"
                             >
                                 <svg
@@ -205,23 +254,229 @@
     {/if}
 </div>
 
+<!-- Document Detail Sheet -->
+<Sheet.Root
+    open={detailSheetOpen}
+    onOpenChange={(open) => {
+        if (!open) closeDocumentDetail();
+    }}
+>
+    <Sheet.Content
+        side="right"
+        class="w-full sm:max-w-2xl overflow-y-auto p-10"
+    >
+        <Sheet.Header>
+            <Sheet.Title>Document Details</Sheet.Title>
+            <Sheet.Description>
+                View all information about this document
+            </Sheet.Description>
+        </Sheet.Header>
+
+        {#if loadingDetails}
+            <div class="flex items-center justify-center py-20">
+                <div class="text-center">
+                    <div
+                        class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"
+                    ></div>
+                    <p class="text-muted-foreground">
+                        Loading document details...
+                    </p>
+                </div>
+            </div>
+        {:else if selectedDoc && selectedDocDetails}
+            <div class="space-y-6 py-6">
+                <!-- Document Image -->
+                <div>
+                    <h3 class="text-sm font-semibold mb-3">Preview Image</h3>
+                    <div
+                        class="border border-border rounded-lg overflow-hidden bg-muted"
+                    >
+                        <img
+                            src={`${API_URL}/documents/preview/${selectedDoc.id}`}
+                            alt={selectedDoc.filename}
+                            class="w-full h-auto"
+                        />
+                    </div>
+                </div>
+
+                <Separator />
+
+                <!-- Basic Information -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold">Basic Information</h3>
+
+                    <div class="grid gap-3">
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Document ID
+                            </p>
+                            <p class="text-sm font-mono">{selectedDoc.id}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Filename
+                            </p>
+                            <p class="text-sm break-all">
+                                {selectedDoc.filename}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Uploaded At
+                            </p>
+                            <p class="text-sm">
+                                {new Date(
+                                    selectedDoc.uploaded_at,
+                                ).toLocaleString()}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Category
+                            </p>
+                            <div>
+                                <Badge
+                                    variant={getCategoryVariant(
+                                        selectedDoc.category,
+                                    )}
+                                >
+                                    {selectedDoc.category}
+                                </Badge>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                OCR Confidence
+                            </p>
+                            <p
+                                class="text-sm font-semibold {selectedDoc.avg_conf >=
+                                80
+                                    ? 'text-green-600'
+                                    : selectedDoc.avg_conf >= 50
+                                      ? 'text-yellow-600'
+                                      : 'text-red-600'}"
+                            >
+                                {selectedDoc.avg_conf.toFixed(2)}%
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <!-- Technical Details -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold">Technical Details</h3>
+
+                    <div class="grid gap-3">
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Content Hash (SHA256)
+                            </p>
+                            <p
+                                class="text-xs font-mono break-all bg-muted p-2 rounded"
+                            >
+                                {selectedDoc.content_hash}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Cluster ID
+                            </p>
+                            <p class="text-sm">
+                                {selectedDoc.cluster_id ?? "N/A"}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs text-muted-foreground mb-1">
+                                Image Path
+                            </p>
+                            <p
+                                class="text-xs font-mono break-all bg-muted p-2 rounded"
+                            >
+                                {selectedDoc.image_path}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <!-- Keywords -->
+                {#if selectedDocDetails.keywords && selectedDocDetails.keywords.length > 0}
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-semibold">Keywords (TF-IDF)</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {#each selectedDocDetails.keywords as keyword}
+                                <span
+                                    class="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-xs"
+                                >
+                                    {keyword.keyword}
+                                    <span class="text-muted-foreground ml-1">
+                                        ({keyword.tfidf_score.toFixed(4)})
+                                    </span>
+                                </span>
+                            {/each}
+                        </div>
+                    </div>
+
+                    <Separator />
+                {/if}
+
+                <!-- Full Text Content -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold">Extracted Text</h3>
+                    <div
+                        class="bg-muted p-4 rounded-lg border border-border max-h-96 overflow-y-auto"
+                    >
+                        <p class="text-sm whitespace-pre-wrap">
+                            {selectedDoc.raw_text}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <Sheet.Footer class="flex gap-2">
+                <Button variant="outline" onclick={closeDocumentDetail}>
+                    Close
+                </Button>
+                <Button
+                    variant="destructive"
+                    onclick={() => {
+                        closeDocumentDetail();
+                        confirmDelete(selectedDoc.id);
+                    }}
+                >
+                    Delete Document
+                </Button>
+            </Sheet.Footer>
+        {/if}
+    </Sheet.Content>
+</Sheet.Root>
+
 <!-- Delete Confirmation Dialog -->
-<AlertDialog open={deleteDialogOpen}>
-    <AlertDialogContent>
-        <AlertDialogHeader>
-            <AlertDialogTitle>Delete Document</AlertDialogTitle>
-            <AlertDialogDescription>
+<AlertDialog.Root open={deleteDialogOpen}>
+    <AlertDialog.Content>
+        <AlertDialog.Header>
+            <AlertDialog.Title>Delete Document</AlertDialog.Title>
+            <AlertDialog.Description>
                 Are you sure you want to delete this document? This action
                 cannot be undone.
-            </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-            <AlertDialogCancel onclick={cancelDelete} disabled={isDeleting}>
+            </AlertDialog.Description>
+        </AlertDialog.Header>
+        <AlertDialog.Footer>
+            <AlertDialog.Cancel onclick={cancelDelete} disabled={isDeleting}>
                 Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onclick={performDelete} disabled={isDeleting}>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action onclick={performDelete} disabled={isDeleting}>
                 {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-        </AlertDialogFooter>
-    </AlertDialogContent>
-</AlertDialog>
+            </AlertDialog.Action>
+        </AlertDialog.Footer>
+    </AlertDialog.Content>
+</AlertDialog.Root>
