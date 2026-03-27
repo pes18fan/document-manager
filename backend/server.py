@@ -141,6 +141,15 @@ def get_document(doc_id: int) -> Document:
     return doc
 
 
+@app.get("/documents/{doc_id}/keywords")
+def get_document_keywords(doc_id: int) -> list[db.Keyword]:
+    keywords: list[db.Keyword] = db.get_document_keywords(doc_id)
+    if not keywords:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return keywords
+
+
 class UpdateDocumentTextRequest(BaseModel):
     raw_text: str
 
@@ -192,7 +201,7 @@ async def update_document_text(
     return result
 
 
-@app.get("/documents/preview/{doc_id}")
+@app.get("/documents/{doc_id}/preview")
 def get_document_preview(doc_id: int):
     """
     Returns the document preview image using cache-aside pattern.
@@ -223,31 +232,6 @@ def get_document_preview(doc_id: int):
         )
 
     return FileResponse(local_path)
-
-
-@app.delete("/documents/preview/{doc_id}")
-def delete_document_preview(doc_id: int):
-    """
-    Delete document preview from both local cache and S3.
-    """
-    doc = db.get_document(doc_id)
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    image_filename = Path(doc.image_path).name
-    local_path = UPLOAD_DIR / image_filename
-
-    # Delete from local cache
-    if local_path.exists():
-        local_path.unlink()
-        logger.info(f"Deleted {image_filename} from local cache")
-
-    # Delete from S3
-    s3_success = s3.delete_file(DOCUMENT_PREVIEW_BUCKET, image_filename)
-    if not s3_success:
-        logger.warning(f"Failed to delete {image_filename} from S3")
-
-    return {"ok": True}
 
 
 @app.delete("/documents/{doc_id}")
@@ -309,29 +293,6 @@ def postprocess_text(text: str) -> str:
     # strip leading/trailing whitespace from each line
     lines = [line.strip() for line in lines]
     return "\n".join(lines)
-
-
-@app.post("/documents/preview/{doc_id}")
-def save_document_preview(req: SaveDocumentPreviewRequest):
-    """
-    Upload a document preview to S3 storage.
-    """
-    mime = magic.from_file(req.path)
-
-    match mime:
-        case "application/pdf" | "image/jpeg" | "image/png" | "image/tiff":
-            pass
-        case _:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid image file. Please upload a valid image or single-page PDF.",
-            )
-
-    s3_success = s3.upload_file(DOCUMENT_PREVIEW_BUCKET, req.path)
-    if not s3_success:
-        raise HTTPException(status_code=500, detail="Failed to upload preview to S3")
-
-    return {"ok": True}
 
 
 @app.post("/ocr")

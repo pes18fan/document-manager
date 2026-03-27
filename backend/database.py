@@ -82,14 +82,16 @@ def save_document(
                 category=category,
             )
         except IntegrityError:
-            raise DocumentExistsError("Document with this content already exists.")
+            raise DocumentExistsError(
+                "Document with this content already exists.")
 
         session.add(doc)
         session.commit()
         session.refresh(doc)
 
         for word, score in keywords:
-            session.add(Keyword(document_id=doc.id, keyword=word, tfidf_score=score))
+            session.add(Keyword(document_id=doc.id,
+                        keyword=word, tfidf_score=score))
         session.commit()
 
         # return some relevant info
@@ -163,7 +165,8 @@ def update_document_text(
 
         # Add new keywords
         for word, score in keywords:
-            session.add(Keyword(document_id=doc.id, keyword=word, tfidf_score=score))
+            session.add(Keyword(document_id=doc.id,
+                        keyword=word, tfidf_score=score))
         session.commit()
 
         return {"id": doc.id, "category": category, "keywords": keywords}

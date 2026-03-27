@@ -9,6 +9,13 @@
     import { Button } from "$lib/components/ui/button";
     import { invalidateAll } from "$app/navigation";
 
+    interface Keyword {
+        id: number;
+        document_id: number;
+        keyword: string;
+        tfidf_score: number;
+    }
+
     let { data }: PageProps = $props();
 
     const API_URL = "http://127.0.0.1:8000";
@@ -27,6 +34,10 @@
     let isEditingText = $state(false);
     let editedText = $state("");
     let isSavingText = $state(false);
+
+    // Keyword loading status
+    let keywords: Keyword[] | null = $state(null);
+    let loadingKeywords = $state(false);
 
     // Get the selected document from the data
     let selectedDoc = $derived(
@@ -76,6 +87,27 @@
         docToDelete = null;
     }
 
+    async function getDocumentKeywords(id: number) {
+        loadingKeywords = true;
+
+        try {
+            const res = await fetch(`${API_URL}/documents/${id}/keywords`);
+
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status}`);
+            }
+
+            keywords = await res.json();
+        } catch (err) {
+            console.error("Failed to fetch keywords:", err);
+            alert(
+                err instanceof Error ? err.message : "Failed to load keywords",
+            );
+        } finally {
+            loadingKeywords = false;
+        }
+    }
+
     // Open document detail dialog
     async function openDocumentDetail(id: number) {
         selectedDocId = id;
@@ -101,12 +133,19 @@
         } finally {
             loadingDetails = false;
         }
+
+        try {
+            await getDocumentKeywords(id);
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     function closeDocumentDetail() {
         detailDialogOpen = false;
         selectedDocId = null;
         selectedDocDetails = null;
+        keywords = null;
         isEditingText = false;
         editedText = "";
     }
@@ -273,7 +312,7 @@
                             class="aspect-3/4 bg-muted flex items-center justify-center overflow-hidden"
                         >
                             <img
-                                src={`${API_URL}/documents/preview/${doc.id}`}
+                                src={`${API_URL}/documents/${doc.id}/preview`}
                                 alt={doc.filename}
                                 class="w-full h-full object-cover"
                             />
@@ -375,7 +414,7 @@
                                 class="border border-border rounded-lg overflow-hidden bg-muted"
                             >
                                 <img
-                                    src={`${API_URL}/documents/preview/${selectedDoc.id}`}
+                                    src={`${API_URL}/documents/${selectedDoc.id}/preview`}
                                     alt={selectedDoc.filename}
                                     class="w-full h-auto max-h-96 object-contain"
                                 />
@@ -572,13 +611,13 @@
                         </div>
 
                         <!-- Keywords -->
-                        {#if selectedDocDetails.keywords && selectedDocDetails.keywords.length > 0}
+                        {#if keywords && keywords.length > 0}
                             <div class="space-y-4">
                                 <h3 class="text-sm font-semibold">
                                     Keywords (TF-IDF)
                                 </h3>
                                 <div class="flex flex-wrap gap-2">
-                                    {#each selectedDocDetails.keywords as keyword}
+                                    {#each keywords as keyword}
                                         <span
                                             class="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-xs"
                                         >
