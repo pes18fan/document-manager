@@ -646,10 +646,10 @@
                 <Button
                     variant="destructive"
                     onclick={async () => {
-                        closeDocumentDetail();
                         if (selectedDoc) {
                             await confirmDelete(selectedDoc.id);
                         }
+                        closeDocumentDetail();
                     }}
                 >
                     Delete Document
