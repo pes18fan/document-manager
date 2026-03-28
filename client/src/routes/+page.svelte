@@ -8,6 +8,7 @@
     import type { PageProps } from "./$types";
     import { Button } from "$lib/components/ui/button";
     import { invalidateAll } from "$app/navigation";
+    import { Spinner } from "$lib/components/ui/spinner";
 
     interface Keyword {
         id: number;
@@ -673,7 +674,12 @@
                 Cancel
             </AlertDialog.Cancel>
             <AlertDialog.Action onclick={performDelete} disabled={isDeleting}>
-                {isDeleting ? "Deleting..." : "Delete"}
+                {#if isDeleting}
+                    <Spinner />
+                    Deleting...
+                {:else}
+                    Delete
+                {/if}
             </AlertDialog.Action>
         </AlertDialog.Footer>
     </AlertDialog.Content>

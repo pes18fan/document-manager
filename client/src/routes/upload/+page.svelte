@@ -11,6 +11,7 @@
         AlertDialogFooter,
         AlertDialogAction,
     } from "$lib/components/ui/alert-dialog";
+    import { Spinner } from "$lib/components/ui/spinner";
 
     // What the result of an "/ocr" POST request looks like.
     interface OcrResult {
@@ -259,7 +260,12 @@
                             disabled={loading || !files[0]}
                             class="flex-1"
                         >
-                            {loading ? "Processing..." : "Run OCR"}
+                            {#if loading}
+                                <Spinner />
+                                Processing...
+                            {:else}
+                                Run OCR
+                            {/if}
                         </Button>
                         <Button
                             onclick={clear}
@@ -330,9 +336,12 @@
                                 disabled={saving}
                                 class="w-full"
                             >
-                                {saving
-                                    ? "Saving to database..."
-                                    : "Save Document"}
+                                {#if saving}
+                                    <Spinner />
+                                    Saving to database...
+                                {:else}
+                                    Save document
+                                {/if}
                             </Button>
                         {/if}
 

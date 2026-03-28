@@ -108,7 +108,8 @@ async def save_document(req: SaveDocumentRequest) -> SaveDocumentResponse:
     s3_success = s3.upload_file(DOCUMENT_PREVIEW_BUCKET, str(image_dest))
     if not s3_success:
         logger.warning(
-            f"Failed to upload {content_hash} to S3, continuing with local storage only"
+            f"Failed to upload {
+                content_hash} to S3, continuing with local storage only"
         )
 
     try:
@@ -195,7 +196,8 @@ async def update_document_text(
         raise HTTPException(status_code=404, detail="Document not found")
 
     logger.info(
-        f"Updated document {doc_id}: new category={category}, {len(keywords)} keywords"
+        f"Updated document {doc_id}: new category={
+            category}, {len(keywords)} keywords"
     )
 
     return result
@@ -271,12 +273,14 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
     try:
         pages = convert_from_bytes(pdf_bytes)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to process PDF: {str(e)}")
+        raise HTTPException(
+            status_code=400, detail=f"Failed to process PDF: {str(e)}")
 
     if len(pages) != 1:
         raise HTTPException(
             status_code=400,
-            detail=f"PDF must have exactly 1 page, but has {len(pages)} pages.",
+            detail=f"PDF must have exactly 1 page, but has {
+                len(pages)} pages.",
         )
 
     return pages[0]
@@ -305,7 +309,8 @@ async def ocr(file: UploadFile):
         cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     else:
         # Process as a regular image
-        cv_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+        cv_img = cv2.imdecode(np.frombuffer(
+            img_bytes, np.uint8), cv2.IMREAD_COLOR)
         if cv_img is None:
             raise HTTPException(
                 status_code=400,
@@ -337,7 +342,8 @@ async def ocr(file: UploadFile):
         if line_num not in lines:
             lines[line_num] = []
         lines[line_num].append(data["text"][i])
-    plain_text = "\n".join([" ".join(filter(None, line)) for line in lines.values()])
+    plain_text = "\n".join([" ".join(filter(None, line))
+                           for line in lines.values()])
     plain_text = postprocess_text(plain_text)
 
     return {
