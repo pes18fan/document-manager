@@ -17,7 +17,6 @@ import base64
 import re
 import logging
 import logging.config
-import magic
 from datetime import datetime
 from pathlib import Path
 from uvicorn.config import LOGGING_CONFIG
@@ -329,21 +328,34 @@ async def ocr(file: UploadFile):
     data = pytesseract.image_to_data(
         out_image,
         lang="nep-ft-final",
-        config=f'--tessdata-dir "{TESSDATA_DIR}"',
+        config=f'--tessdata-dir "{TESSDATA_DIR}" --psm 3',
         output_type=Output.DICT,
     )
 
-    word_confs = [c for c in data["conf"] if c != -1]
+    word_confs = [
+        data["conf"][i]
+        for i in range(len(data["conf"]))
+        if data["level"][i] == 5 and data["conf"][i] != -1
+    ]
     avg_conf = float(np.mean(word_confs)) if word_confs else 0.0
 
     # reconstruct plain text
     lines = {}
-    for i, line_num in enumerate(data["line_num"]):
-        if line_num not in lines:
-            lines[line_num] = []
-        lines[line_num].append(data["text"][i])
-    plain_text = "\n".join([" ".join(filter(None, line))
-                           for line in lines.values()])
+    for i in range(len(data["line_num"])):
+        if data["level"][i] != 5:  # skip non-word entries
+            continue
+        if data["text"][i].strip() == "":
+            continue
+        key = (data["block_num"][i], data["line_num"][i])
+        if key not in lines:
+            lines[key] = []
+        lines[key].append(data["text"][i])
+
+    # sort by key to ensure correct reading order
+    plain_text = "\n".join([
+        " ".join(filter(None, words))
+        for key, words in sorted(lines.items())
+    ])
     plain_text = postprocess_text(plain_text)
 
     return {
