@@ -310,3 +310,74 @@ results, which were slightly better for the base model. This illustrates that
 the performance in lines doesn't always translate to pages.
 
 ![Confidence comparison](../confidence_comparison_page.png)
+
+### Run 6
+
+One final run of training done before external defense. Adds 33 manually labeled
+lines and 63 synthetic lines (total 96), making a total of 858 training lines.
+
+Same parameters used as run 4.
+
+```bash
+make training MODEL_NAME=nep-ft START_MODEL=nep TESSDATA=./tessdata EPOCHS=2 LEARNING_RATE=0.0015 LANG_TYPE=Indic RANDOM_SEED=42
+```
+
+#### Results
+
+Plot of CER:
+
+![CER plot](final/run_6_with_extra_data/nep-ft.plot_cer.png)
+
+Log plot of the same:
+
+![log plot](final/run_6_with_extra_data/nep-ft.plot_log.png)
+
+Best run so far.
+
+Textual log of the training process is in `final/run_4/training.log`
+
+### Comparison with base
+
+Done similarly to previous occasion:
+
+```bash
+# base model
+lstmeval \
+  --model tessdata/nep.traineddata \
+  --eval_listfile data/nep-ft/list.eval \
+  --traineddata data/nep-ft/nep-ft.traineddata
+
+# fine-tuned model (run 4)
+lstmeval \
+  --model final_trained_models/run_4/nep-ft.traineddata \
+  --eval_listfile data/nep-ft/list.eval \
+  --traineddata data/nep-ft/nep-ft.traineddata
+
+# fine-tuned model (run 6)
+lstmeval \
+  --model final_trained_models/run_6_with_extra_data/nep-ft.traineddata \
+  --eval_listfile data/nep-ft/list.eval \
+  --traineddata data/nep-ft/nep-ft.traineddata
+```
+
+For the base model:
+
+```
+BCER eval=25.586, BWER eval=45.562
+```
+
+For fine tuned model (run 4, 762 line set):
+
+```
+BCER eval=15.906, BWER eval=25.071
+```
+
+For final fine tuned model (run 6, 858 line set):
+
+```
+BCER eval=15.583, BWER eval=23.849
+```
+
+Slight improvement.
+
+The run 6 model and the updated dataset will not be used for the final defense.
