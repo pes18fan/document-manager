@@ -285,17 +285,41 @@ def pdf_to_image(pdf_bytes: bytes) -> Image.Image:
     return pages[0]
 
 
+def is_garbage_word(word: str) -> bool:
+    if not word:
+        return True
+    devanagari_chars = len(re.findall(r'[\u0900-\u097F]', word))
+    total_chars = len(word)
+    # words starting with a vowel diacritic are malformed
+    if re.match(r'^[\u0900-\u0903\u093A-\u094F\u0955-\u0957]', word):
+        return True
+    # low devanagari density
+    if total_chars > 3 and devanagari_chars / total_chars < 0.6:
+        return True
+    return False
+
+
 def postprocess_text(text: str) -> str:
     # normalize whitespace
     text = re.sub(r" +", " ", text)
     # normalize newlines
     text = re.sub(r"\n{3,}", "\n\n", text)
-    # remove lines that are only punctuation or symbols with no Devanagari
+    # remove lines with no Devanagari at all
     lines = text.split("\n")
     lines = [line for line in lines if re.search(r"[\u0900-\u097F]", line)]
     # strip leading/trailing whitespace from each line
     lines = [line.strip() for line in lines]
-    return "\n".join(lines)
+    # remove garbage words and latin words from each line
+    cleaned_lines = []
+    for line in lines:
+        words = line.split(" ")
+        words = [
+            w for w in words
+            if not re.search(r"[a-zA-Z0-9]", w) and not is_garbage_word(w)
+        ]
+        if words:
+            cleaned_lines.append(" ".join(words))
+    return "\n".join(cleaned_lines)
 
 
 @app.post("/ocr")
