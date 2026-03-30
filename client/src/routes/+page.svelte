@@ -232,27 +232,27 @@
         return name.slice(0, keep) + "..." + name.slice(-keep) + ext;
     }
 
-    // Map categories to badge variants or custom colors
-    function getCategoryVariant(
-        category: string,
-    ): "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" {
-        const categoryMap: Record<
-            string,
-            | "default"
-            | "secondary"
-            | "destructive"
-            | "outline"
-            | "ghost"
-            | "link"
-        > = {
-            Politics: "default",
-            Finance: "secondary",
-            Sports: "destructive",
-            Society: "outline",
-            Health: "ghost",
-        };
-        return categoryMap[category] || "default";
-    }
+    // // Map categories to badge variants or custom colors
+    // function getCategoryVariant(
+    //     category: string,
+    // ): "default" | "secondary" | "destructive" | "outline" | "ghost" | "link" {
+    //     const categoryMap: Record<
+    //         string,
+    //         | "default"
+    //         | "secondary"
+    //         | "destructive"
+    //         | "outline"
+    //         | "ghost"
+    //         | "link"
+    //     > = {
+    //         Politics: "default",
+    //         Finance: "secondary",
+    //         Sports: "destructive",
+    //         Society: "outline",
+    //         Health: "ghost",
+    //     };
+    //     return categoryMap[category] || "default";
+    // }
 </script>
 
 <div class="container mx-auto p-6">
@@ -334,7 +334,7 @@
                             </p>
                         </div>
                         <div class="flex items-center justify-between w-full">
-                            <Badge variant={getCategoryVariant(doc.category)}>
+                            <Badge variant=default>
                                 {doc.category}
                             </Badge>
                             <Button
@@ -472,9 +472,7 @@
                                     </p>
                                     <div>
                                         <Badge
-                                            variant={getCategoryVariant(
-                                                selectedDoc.category,
-                                            )}
+                                            variant={"default"}
                                         >
                                             {selectedDoc.category}
                                         </Badge>
