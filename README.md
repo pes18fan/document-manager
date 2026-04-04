@@ -3,7 +3,8 @@
 A full-fledged web-based application for management of Nepali scanned
 documents.
 
-Built as a minor project for college.
+Built as a minor project for college, alongside [@dhityl](github.com/dhityl),
+[@siddhhhant](github.com/siddhhhant) and [@SanskarShrestha00](github.com/SanskarShrestha00).
 
 Some stuff this does:
 
